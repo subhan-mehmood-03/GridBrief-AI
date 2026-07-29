@@ -1,1 +1,14 @@
 .env
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+chroma_data/
+
+
+.DS_Store
+CACHEDIR.TAG
+.ruff_cache/
+.env

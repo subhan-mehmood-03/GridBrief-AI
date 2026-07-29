@@ -1,0 +1,50 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "gridbrief"
+version = "0.1.0"
+description = "GridBrief AI energy-intelligence application"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "pydantic-settings>=2.7,<3",
+  "typer>=0.15,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3,<9",
+  "ruff>=0.9,<1",
+]
+web = [
+  "fastapi>=0.115,<1",
+  "uvicorn[standard]>=0.34,<1",
+]
+ercot = [
+  "gridstatus>=0.29,<1",
+]
+local-rag = [
+  "chromadb>=0.6,<1",
+  "sentence-transformers>=3.3,<4",
+]
+
+[project.scripts]
+gridbrief = "gridbrief.cli:app"
+gridbrief-web = "gridbrief.web:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gridbrief"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
