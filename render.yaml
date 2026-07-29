@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: gridbrief-web
+    runtime: docker
+    healthCheckPath: /api/health
+    envVars:
+      - key: GRIDBRIEF_PUBLIC_MODE
+        value: "true"
+      - key: GRIDBRIEF_AUTOMATIC_REFRESH
+        value: "false"
+      - key: GRIDBRIEF_RETRIEVAL_BACKEND
+        value: pgvector
+      - key: GRIDBRIEF_DATABASE_URL
+        sync: false
+      - key: GRIDBRIEF_CONTACT_EMAIL
+        sync: false
+      - key: GRIDBRIEF_ADMIN_API_KEY
+        generateValue: true
+      - key: GRIDBRIEF_EIA_API_KEY
+        sync: false
+      - key: GRIDBRIEF_GROQ_API_KEY
+        sync: false
+      - key: GRIDBRIEF_GROQ_MODEL
+        sync: false
+

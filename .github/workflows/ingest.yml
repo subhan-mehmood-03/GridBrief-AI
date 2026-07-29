@@ -1,0 +1,40 @@
+name: Ingest data
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gridbrief-ingest
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install project
+        run: python -m pip install -e ".[ercot,local-rag]"
+      - name: Incremental ingestion
+        env:
+          GRIDBRIEF_DATABASE_URL: ${{ secrets.GRIDBRIEF_DATABASE_URL }}
+          GRIDBRIEF_EIA_API_KEY: ${{ secrets.GRIDBRIEF_EIA_API_KEY }}
+          GRIDBRIEF_ERCOT_SUBSCRIPTION_KEY: ${{ secrets.GRIDBRIEF_ERCOT_SUBSCRIPTION_KEY }}
+          GRIDBRIEF_ERCOT_API_USERNAME: ${{ secrets.GRIDBRIEF_ERCOT_API_USERNAME }}
+          GRIDBRIEF_ERCOT_API_PASSWORD: ${{ secrets.GRIDBRIEF_ERCOT_API_PASSWORD }}
+          GRIDBRIEF_GROQ_API_KEY: ${{ secrets.GRIDBRIEF_GROQ_API_KEY }}
+          GRIDBRIEF_CONTACT_EMAIL: ${{ secrets.GRIDBRIEF_CONTACT_EMAIL }}
+        run: gridbrief ingest all --scheduled
+      - name: Incremental indexing
+        env:
+          GRIDBRIEF_DATABASE_URL: ${{ secrets.GRIDBRIEF_DATABASE_URL }}
+        run: gridbrief index
+

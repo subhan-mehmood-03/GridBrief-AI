@@ -1,0 +1,35 @@
+name: Generate daily newsletter
+
+on:
+  schedule:
+    - cron: "0 12 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gridbrief-generate
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install project
+        run: python -m pip install -e ".[ercot,local-rag]"
+      - name: Generate persona editions
+        env:
+          GRIDBRIEF_DATABASE_URL: ${{ secrets.GRIDBRIEF_DATABASE_URL }}
+          GRIDBRIEF_GROQ_API_KEY: ${{ secrets.GRIDBRIEF_GROQ_API_KEY }}
+          GRIDBRIEF_GROQ_MODEL: ${{ secrets.GRIDBRIEF_GROQ_MODEL }}
+        run: |
+          gridbrief generate --role general --scheduled
+          gridbrief generate --role market_analyst --scheduled
+          gridbrief generate --role grid_operations --scheduled
+
