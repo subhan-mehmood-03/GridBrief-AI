@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import func, select
 
@@ -8,7 +8,7 @@ from gridbrief.models import Document, RawItem, Source, Timeseries
 
 
 def _utc(*args) -> datetime:
-    return datetime(*args, tzinfo=timezone.utc)
+    return datetime(*args, tzinfo=UTC)
 
 
 def test_source_upsert_round_trip(repo):
@@ -115,7 +115,9 @@ def test_document_upsert_on_source_ref(repo):
     count = repo.session.execute(select(func.count()).select_from(Document)).scalar_one()
     assert count == 1
 
-    doc = repo.session.execute(select(Document).where(Document.source_ref == "article-42")).scalar_one()
+    doc = repo.session.execute(
+        select(Document).where(Document.source_ref == "article-42")
+    ).scalar_one()
     assert doc.title == "Updated title"
     assert doc.importance == 0.6
 

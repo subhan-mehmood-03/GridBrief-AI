@@ -6,9 +6,9 @@ by the `gridbrief init-db` / `gridbrief migrate` CLI commands.
 """
 from __future__ import annotations
 
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterator
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine

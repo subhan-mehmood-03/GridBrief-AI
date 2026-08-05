@@ -47,5 +47,7 @@ def test_expected_tables_exist(engine):
 
 def test_pgvector_extension_enabled(engine):
     with engine.connect() as conn:
-        row = conn.execute(text("select extname from pg_extension where extname = 'vector'")).fetchone()
+        row = conn.execute(
+            text("select extname from pg_extension where extname = 'vector'")
+        ).fetchone()
     assert row is not None

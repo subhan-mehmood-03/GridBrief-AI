@@ -12,8 +12,9 @@ through it, Person 6 (web) never talks to the database directly.
 """
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from datetime import datetime
-from typing import Any, Iterable, Sequence
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
