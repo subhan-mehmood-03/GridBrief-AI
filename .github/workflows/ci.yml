@@ -11,6 +11,22 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: localtest
+          POSTGRES_DB: gridbrief_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d gridbrief_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      GRIDBRIEF_DATABASE_URL: postgresql://postgres:localtest@localhost:5432/gridbrief_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
