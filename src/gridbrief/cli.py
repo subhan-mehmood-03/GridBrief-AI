@@ -3,6 +3,7 @@
 from typing import Annotated
 
 import typer
+
 from gridbrief.cli_db import cmd_init_db, cmd_migrate
 
 app = typer.Typer(help="GridBrief AI operational commands.", no_args_is_help=True)
