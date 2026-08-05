@@ -3,6 +3,7 @@
 from typing import Annotated
 
 import typer
+from gridbrief.cli_db import cmd_init_db, cmd_migrate
 
 app = typer.Typer(help="GridBrief AI operational commands.", no_args_is_help=True)
 
@@ -13,14 +14,14 @@ def _not_implemented(operation: str) -> None:
 
 @app.command("init-db")
 def init_db() -> None:
-    """Initialize database schema (placeholder)."""
-    _not_implemented("init-db")
+    """Initialize database schema."""
+    cmd_init_db()
 
 
 @app.command()
 def migrate() -> None:
-    """Apply database migrations (placeholder)."""
-    _not_implemented("migrate")
+    """Apply database migrations."""
+    cmd_migrate()
 
 
 @app.command()
