@@ -105,6 +105,7 @@ def ingest_many(
 def _begin_run(source_name: str, started_at: datetime) -> tuple[int, Any | None, int]:
     kind, base_url = SOURCE_METADATA[source_name]
     with session_scope() as session:
+        _disable_automatic_prepares(session)
         repo = Repository(session)
         source = repo.upsert_source(name=source_name, kind=kind, base_url=base_url)
         watermark = repo.get_watermark(source.id)
@@ -117,6 +118,7 @@ def _persist(source_id: int, items: list[Any], ingested_at: datetime) -> tuple[i
     timeseries_count = 0
     document_count = 0
     with session_scope() as session:
+        _disable_automatic_prepares(session)
         repo = Repository(session)
         for item in items:
             normalized = normalize_item(item)
@@ -152,6 +154,7 @@ def _finish_run(
     detail: dict[str, Any],
 ) -> None:
     with session_scope() as session:
+        _disable_automatic_prepares(session)
         repo = Repository(session)
         existing = repo.get_watermark(source_id)
         repo.finish_ingestion_run(
@@ -185,3 +188,10 @@ def _adapter(source: str, settings: Settings) -> Any:
     if source == "nws":
         return NWSAdapter(settings.contact_email)
     return RSSAdapter()
+
+
+def _disable_automatic_prepares(session: Any) -> None:
+    """Keep psycopg compatible with Supabase's transaction-mode pooler."""
+    driver_connection = session.connection().connection.driver_connection
+    if hasattr(driver_connection, "prepare_threshold"):
+        driver_connection.prepare_threshold = None
