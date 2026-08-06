@@ -1,10 +1,12 @@
-"""Command-line interface placeholders for GridBrief operations."""
+"""Command-line interface for GridBrief operations."""
 
+import json
 from typing import Annotated
 
 import typer
 
 from gridbrief.cli_db import cmd_init_db, cmd_migrate
+from gridbrief.ingestion import SUPPORTED_SOURCES, ingest_many
 
 app = typer.Typer(help="GridBrief AI operational commands.", no_args_is_help=True)
 
@@ -31,9 +33,22 @@ def ingest(
     hours: Annotated[int | None, typer.Option(help="Lookback window.")] = None,
     scheduled: Annotated[bool, typer.Option(help="Invocation is from the scheduler.")] = False,
 ) -> None:
-    """Ingest source data (placeholder)."""
-    del source, hours, scheduled
-    _not_implemented("ingest")
+    """Fetch, normalize, and persist live source data."""
+    del scheduled
+    source = source.lower()
+    if source != "all" and source not in SUPPORTED_SOURCES:
+        choices = ", ".join((*SUPPORTED_SOURCES, "all"))
+        raise typer.BadParameter(f"source must be one of: {choices}")
+    lookback = hours if hours is not None else 24
+    if lookback <= 0:
+        raise typer.BadParameter("--hours must be greater than zero")
+    try:
+        results = ingest_many(source, hours=lookback)
+    except Exception as exc:
+        typer.echo(f"Ingestion failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    for result in results:
+        typer.echo(json.dumps(result.as_dict(), sort_keys=True))
 
 
 @app.command()
@@ -68,4 +83,3 @@ def archive() -> None:
 def scheduler() -> None:
     """Run the local scheduler (placeholder)."""
     _not_implemented("scheduler")
-
