@@ -10,13 +10,14 @@ Downstream teammates should only touch the database through this class:
 Person 3 (ingestion) writes through it, Person 4/5 (retrieval/AI) read
 through it, Person 6 (web) never talks to the database directly.
 """
+
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
@@ -231,6 +232,37 @@ class Repository:
             raise ValueError(f"document {document_id} not found")
         doc.chunk_ids = list(chunk_ids)
 
+    def get_recent_documents(
+        self,
+        *,
+        iso: str,
+        start: datetime,
+        end: datetime,
+        topic: str | None = None,
+        limit: int = 50,
+    ) -> list[Document]:
+        """Return recent citable documents, optionally constrained by topic.
+
+        ``iso`` is resolved through indexed chunks because documents are ISO-neutral.
+        Documents without chunks remain eligible so a newly ingested item can still
+        participate before the next indexing run.
+        """
+        stmt = (
+            select(Document)
+            .outerjoin(Chunk, Chunk.document_id == Document.id)
+            .where(
+                Document.published_at >= start,
+                Document.published_at <= end,
+                or_(Chunk.iso == iso, Chunk.iso.is_(None)),
+            )
+            .distinct()
+            .order_by(Document.importance.desc().nullslast(), Document.published_at.desc())
+            .limit(limit)
+        )
+        if topic is not None:
+            stmt = stmt.where(Document.topic == topic)
+        return list(self.session.execute(stmt).scalars().all())
+
     # ---------------------------------------------------------------- chunks
     def add_chunk(
         self,
@@ -355,6 +387,26 @@ class Repository:
         self.session.add(trigger)
         self.session.flush()
         return trigger, True
+
+    def get_active_breaking_cooldown(
+        self, *, topic: str, fired_at: datetime
+    ) -> BreakingTrigger | None:
+        stmt = (
+            select(BreakingTrigger)
+            .where(
+                BreakingTrigger.topic == topic,
+                BreakingTrigger.cooldown_until.isnot(None),
+                BreakingTrigger.cooldown_until > fired_at,
+            )
+            .order_by(BreakingTrigger.fired_at.desc())
+            .limit(1)
+        )
+        return self.session.execute(stmt).scalar_one_or_none()
+
+    def delete_breaking_trigger(self, trigger_id: int) -> None:
+        trigger = self.session.get(BreakingTrigger, trigger_id)
+        if trigger is not None:
+            self.session.delete(trigger)
 
     # ------------------------------------------------------------- editions
     def save_edition(

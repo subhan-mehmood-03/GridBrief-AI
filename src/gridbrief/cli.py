@@ -5,6 +5,7 @@ from typing import Annotated
 
 import typer
 
+from gridbrief.ai import generate_edition_json
 from gridbrief.cli_db import cmd_init_db, cmd_migrate
 from gridbrief.indexing import index_documents
 from gridbrief.ingestion import SUPPORTED_SOURCES, ingest_many
@@ -76,9 +77,7 @@ def index(
     """Update the pgvector semantic retrieval index."""
 
     if batch_size <= 0:
-        raise typer.BadParameter(
-            "--batch-size must be greater than zero"
-        )
+        raise typer.BadParameter("--batch-size must be greater than zero")
 
     try:
         summary = index_documents(
@@ -107,9 +106,14 @@ def generate(
     role: Annotated[str, typer.Option(help="Edition persona.")] = "general",
     scheduled: Annotated[bool, typer.Option(help="Invocation is from the scheduler.")] = False,
 ) -> None:
-    """Generate an edition (placeholder)."""
-    del role, scheduled
-    _not_implemented("generate")
+    """Generate, verify, and save a cited edition."""
+    try:
+        typer.echo(generate_edition_json(role=role, scheduled=scheduled))
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc), param_hint="--role") from exc
+    except Exception as exc:
+        typer.echo(f"Generation failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
 
 
 @app.command()

@@ -33,7 +33,12 @@ def get_database_url() -> str:
 def get_engine() -> Engine:
     global _ENGINE
     if _ENGINE is None:
-        _ENGINE = create_engine(get_database_url(), pool_pre_ping=True, future=True)
+        _ENGINE = create_engine(
+            get_database_url(),
+            pool_pre_ping=True,
+            future=True,
+            connect_args={"prepare_threshold": None},
+        )
     return _ENGINE
 
 

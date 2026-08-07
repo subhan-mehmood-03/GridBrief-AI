@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     iso: str = "ERCOT"
     timezone: str = "America/Chicago"
     freshness_minutes: int = Field(default=60, ge=1)
+    breaking_price_threshold: float = Field(default=1_000.0, gt=0)
+    breaking_outage_threshold_mw: float = Field(default=1_000.0, gt=0)
     require_fresh_data: bool = True
     automatic_refresh: bool = True
     public_mode: bool = False

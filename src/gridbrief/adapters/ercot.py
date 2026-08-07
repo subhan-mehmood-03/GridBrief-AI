@@ -27,8 +27,10 @@ class ERCOTAdapter:
 
         ercot = Ercot()
         items: list[RawItem] = []
-        day = since.astimezone(MARKET_TIMEZONE).date()
         last_day = until.astimezone(MARKET_TIMEZONE).date()
+        # Price history is fetched as a full range below. Keep the slower
+        # daily load/fuel endpoints bounded to the edition-critical horizon.
+        day = last_day
         while day <= last_day:
             date_text = day.isoformat()
             frames = [("load", ercot.get_load(date_text))]
@@ -38,13 +40,28 @@ class ERCOTAdapter:
                 items.extend(_frame_items(dataset, frame, since, until))
             day += timedelta(days=1)
 
-        latest_spp = ercot.get_spp(
-            "latest",
-            market=Markets.REAL_TIME_15_MIN,
-            locations=["HB_NORTH", "HB_SOUTH", "HB_WEST", "HB_HOUSTON"],
-            location_type="Trading Hub",
-        )
-        items.extend(_frame_items("spp", latest_spp, since, until))
+        price_frames = [
+            (
+                "spp_rt",
+                ercot.get_spp(
+                    "latest",
+                    market=Markets.REAL_TIME_15_MIN,
+                    locations=["HB_NORTH", "HB_SOUTH", "HB_WEST", "HB_HOUSTON"],
+                    location_type="Trading Hub",
+                ),
+            ),
+            (
+                "spp_da",
+                ercot.get_spp(
+                    "latest",
+                    market=Markets.DAY_AHEAD_HOURLY,
+                    locations=["HB_NORTH", "HB_SOUTH", "HB_WEST", "HB_HOUSTON"],
+                    location_type="Trading Hub",
+                ),
+            ),
+        ]
+        for dataset, frame in price_frames:
+            items.extend(_frame_items(dataset, frame, since, until))
         return items
 
 

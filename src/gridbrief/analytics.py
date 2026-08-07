@@ -307,3 +307,122 @@ def calculate_price_spreads(
         real_time_observation_id=real_time_observation_id,
         day_ahead_observation_id=day_ahead_observation_id,
     )
+
+
+@dataclass(frozen=True, slots=True)
+class DartWindowSummary:
+    """Hour-aligned deterministic DA-minus-RT price-spread evidence."""
+
+    settlement_point: str
+    window_hours: int
+    window_start: datetime
+    window_end: datetime
+    paired_hours: int
+    coverage: float
+    latest_hour: datetime
+    latest_real_time_price: float
+    latest_day_ahead_price: float
+    latest_dart: float
+    average_dart: float
+    unit: str
+    real_time_observation_ids: tuple[int, ...]
+    day_ahead_observation_ids: tuple[int, ...]
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "settlement_point": self.settlement_point,
+            "window_hours": self.window_hours,
+            "from": self.window_start.isoformat(),
+            "to": self.window_end.isoformat(),
+            "paired_hours": self.paired_hours,
+            "coverage": self.coverage,
+            "latest_hour": self.latest_hour.isoformat(),
+            "latest_real_time_price": self.latest_real_time_price,
+            "latest_day_ahead_price": self.latest_day_ahead_price,
+            "latest_dart": self.latest_dart,
+            "average_dart": self.average_dart,
+            "unit": self.unit,
+            "evidence": {
+                "formula": "day_ahead_price - real_time_price",
+                "real_time_metric": "spp_rt",
+                "day_ahead_metric": "spp_da",
+                "real_time_observation_ids": list(self.real_time_observation_ids),
+                "day_ahead_observation_ids": list(self.day_ahead_observation_ids),
+            },
+        }
+
+
+def get_dart_window_summary(
+    *,
+    settlement_point: str,
+    hours: int,
+    end: datetime | None = None,
+) -> DartWindowSummary:
+    """Pair DA hourly prices with the mean RT price in the same delivery hour."""
+    _validate_window_hours(hours)
+    location = _normalize_required_text(settlement_point, field_name="settlement_point")
+    window_end = _normalize_window_end(end)
+    window_start = window_end - timedelta(hours=hours)
+    settings = get_settings()
+    real_time = _load_observations(
+        metric="spp_rt",
+        settlement_point=location,
+        window_start=window_start,
+        window_end=window_end,
+        iso=settings.iso,
+    )
+    day_ahead = _load_observations(
+        metric="spp_da",
+        settlement_point=location,
+        window_start=window_start,
+        window_end=window_end,
+        iso=settings.iso,
+    )
+    if not real_time:
+        raise LookupError(f"No real-time SPP observations were found for {location}.")
+    if not day_ahead:
+        raise LookupError(f"No day-ahead SPP observations were found for {location}.")
+    units = {row.unit for row in (*real_time, *day_ahead)}
+    if len(units) != 1:
+        raise ValueError("The paired RT and DA observations contain mixed units.")
+
+    def delivery_hour(timestamp: datetime) -> datetime:
+        return timestamp.astimezone(UTC).replace(minute=0, second=0, microsecond=0)
+
+    rt_by_hour: dict[datetime, list[ObservationEvidence]] = {}
+    for observation in real_time:
+        rt_by_hour.setdefault(delivery_hour(observation.timestamp), []).append(observation)
+    da_by_hour: dict[datetime, ObservationEvidence] = {}
+    for observation in day_ahead:
+        hour = delivery_hour(observation.timestamp)
+        current = da_by_hour.get(hour)
+        if current is None or observation.observation_id > current.observation_id:
+            da_by_hour[hour] = observation
+    common_hours = sorted(set(rt_by_hour) & set(da_by_hour))
+    if not common_hours:
+        raise LookupError(f"No hour-aligned RT and DA SPP observations were found for {location}.")
+    hourly = []
+    for hour in common_hours:
+        rt_rows = rt_by_hour[hour]
+        rt_average = float(fmean(row.value for row in rt_rows))
+        da_row = da_by_hour[hour]
+        hourly.append((hour, rt_average, da_row.value, da_row.value - rt_average))
+    latest_hour, latest_rt, latest_da, latest_dart = hourly[-1]
+    return DartWindowSummary(
+        settlement_point=location,
+        window_hours=hours,
+        window_start=window_start,
+        window_end=window_end,
+        paired_hours=len(hourly),
+        coverage=min(1.0, len(hourly) / hours),
+        latest_hour=latest_hour,
+        latest_real_time_price=latest_rt,
+        latest_day_ahead_price=latest_da,
+        latest_dart=latest_dart,
+        average_dart=float(fmean(row[3] for row in hourly)),
+        unit=next(iter(units)),
+        real_time_observation_ids=tuple(
+            row.observation_id for hour in common_hours for row in rt_by_hour[hour]
+        ),
+        day_ahead_observation_ids=tuple(da_by_hour[hour].observation_id for hour in common_hours),
+    )
