@@ -5,20 +5,22 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 from functools import lru_cache
+from typing import TYPE_CHECKING
 
-from sentence_transformers import SentenceTransformer
 from sqlalchemy import select
 
 from gridbrief.config import get_settings
 from gridbrief.db import get_session_factory
 from gridbrief.models import Chunk, Document
 
+if TYPE_CHECKING:
+    from sentence_transformers import SentenceTransformer
+
+
 EXPECTED_EMBEDDING_DIMENSION = 768
 DEFAULT_RESULT_COUNT = 5
 MAX_RESULT_COUNT = 50
-QUERY_INSTRUCTION = (
-    "Represent this sentence for searching relevant passages: "
-)
+QUERY_INSTRUCTION = "Represent this sentence for searching relevant passages: "
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,9 +60,7 @@ class SearchResult:
             "source": self.source,
             "topic": self.topic,
             "published_at": (
-                self.published_at.isoformat()
-                if self.published_at is not None
-                else None
+                self.published_at.isoformat() if self.published_at is not None else None
             ),
             "url": self.url,
         }
@@ -69,6 +69,7 @@ class SearchResult:
 @lru_cache(maxsize=1)
 def _get_embedding_model() -> SentenceTransformer:
     """Load and cache the configured embedding model."""
+    from sentence_transformers import SentenceTransformer
 
     settings = get_settings()
     model = SentenceTransformer(settings.embedding_model)
@@ -131,26 +132,19 @@ def search(
         raise ValueError("k must be greater than zero")
 
     if k > MAX_RESULT_COUNT:
-        raise ValueError(
-            f"k cannot be greater than {MAX_RESULT_COUNT}"
-        )
+        raise ValueError(f"k cannot be greater than {MAX_RESULT_COUNT}")
 
     settings = get_settings()
 
     if settings.retrieval_backend != "pgvector":
-        raise ValueError(
-            "semantic search currently requires "
-            "GRIDBRIEF_RETRIEVAL_BACKEND=pgvector"
-        )
+        raise ValueError("semantic search currently requires GRIDBRIEF_RETRIEVAL_BACKEND=pgvector")
 
     normalized_query = _normalize_query(query)
     query_embedding = _encode_query(normalized_query)
     active_filters = filters or SearchFilters()
     iso = active_filters.iso or settings.iso
 
-    distance = Chunk.embedding.cosine_distance(
-        query_embedding
-    ).label("distance")
+    distance = Chunk.embedding.cosine_distance(query_embedding).label("distance")
 
     statement = (
         select(
@@ -166,24 +160,16 @@ def search(
     )
 
     if active_filters.source is not None:
-        statement = statement.where(
-            Chunk.source == active_filters.source
-        )
+        statement = statement.where(Chunk.source == active_filters.source)
 
     if active_filters.topic is not None:
-        statement = statement.where(
-            Chunk.topic == active_filters.topic
-        )
+        statement = statement.where(Chunk.topic == active_filters.topic)
 
     if active_filters.published_after is not None:
-        statement = statement.where(
-            Chunk.published_at >= active_filters.published_after
-        )
+        statement = statement.where(Chunk.published_at >= active_filters.published_after)
 
     if active_filters.published_before is not None:
-        statement = statement.where(
-            Chunk.published_at <= active_filters.published_before
-        )
+        statement = statement.where(Chunk.published_at <= active_filters.published_before)
 
     statement = statement.order_by(
         distance.asc(),

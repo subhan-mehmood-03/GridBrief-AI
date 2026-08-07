@@ -5,7 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 
-from sentence_transformers import SentenceTransformer
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
@@ -112,9 +111,7 @@ def _build_plans(
 
         existing = tuple(
             session.execute(
-                select(Chunk)
-                .where(Chunk.document_id == document.id)
-                .order_by(Chunk.chunk_id)
+                select(Chunk).where(Chunk.document_id == document.id).order_by(Chunk.chunk_id)
             )
             .scalars()
             .all()
@@ -135,10 +132,7 @@ def _build_plans(
         needs_index = force or not is_current
 
         stored_document_ids = tuple(document.chunk_ids or ())
-        chunk_ids_need_repair = (
-            not needs_index
-            and stored_document_ids != existing_chunk_ids
-        )
+        chunk_ids_need_repair = not needs_index and stored_document_ids != existing_chunk_ids
 
         plans.append(
             _DocumentPlan(
@@ -176,6 +170,8 @@ def index_documents(
 
     settings = get_settings()
 
+    from sentence_transformers import SentenceTransformer
+
     model = SentenceTransformer(settings.embedding_model)
     dimension = model.get_sentence_embedding_dimension()
 
@@ -195,17 +191,9 @@ def index_documents(
             force=force,
         )
 
-    changed_plans = [
-        plan
-        for plan in plans
-        if plan.needs_index
-    ]
+    changed_plans = [plan for plan in plans if plan.needs_index]
 
-    chunk_texts = [
-        chunk.text
-        for plan in changed_plans
-        for chunk in plan.chunks
-    ]
+    chunk_texts = [chunk.text for plan in changed_plans for chunk in plan.chunks]
 
     if dry_run:
         return IndexSummary(
@@ -245,20 +233,14 @@ def index_documents(
         repository = Repository(session)
 
         for plan in changed_plans:
-            session.execute(
-                delete(Chunk).where(
-                    Chunk.document_id == plan.document_id
-                )
-            )
+            session.execute(delete(Chunk).where(Chunk.document_id == plan.document_id))
             session.flush()
 
             new_chunk_ids: list[int] = []
 
             for draft in plan.chunks:
                 if embeddings is None:
-                    raise RuntimeError(
-                        "embeddings are missing for prepared chunks"
-                    )
+                    raise RuntimeError("embeddings are missing for prepared chunks")
 
                 embedding = embeddings[embedding_offset].tolist()
                 embedding_offset += 1
