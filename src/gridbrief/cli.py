@@ -6,6 +6,7 @@ from typing import Annotated
 import typer
 
 from gridbrief.cli_db import cmd_init_db, cmd_migrate
+from gridbrief.indexing import index_documents
 from gridbrief.ingestion import SUPPORTED_SOURCES, ingest_many
 
 app = typer.Typer(help="GridBrief AI operational commands.", no_args_is_help=True)
@@ -52,9 +53,53 @@ def ingest(
 
 
 @app.command()
-def index() -> None:
-    """Update the retrieval index (placeholder)."""
-    _not_implemented("index")
+def index(
+    dry_run: Annotated[
+        bool,
+        typer.Option(
+            help="Plan indexing without writing to the database.",
+        ),
+    ] = False,
+    force: Annotated[
+        bool,
+        typer.Option(
+            help="Rebuild chunks even when stored content is current.",
+        ),
+    ] = False,
+    batch_size: Annotated[
+        int,
+        typer.Option(
+            help="Number of chunks embedded in each batch.",
+        ),
+    ] = 16,
+) -> None:
+    """Update the pgvector semantic retrieval index."""
+
+    if batch_size <= 0:
+        raise typer.BadParameter(
+            "--batch-size must be greater than zero"
+        )
+
+    try:
+        summary = index_documents(
+            dry_run=dry_run,
+            force=force,
+            batch_size=batch_size,
+            show_progress=not dry_run,
+        )
+    except Exception as exc:
+        typer.echo(
+            f"Indexing failed: {exc}",
+            err=True,
+        )
+        raise typer.Exit(code=1) from exc
+
+    typer.echo(
+        json.dumps(
+            summary.as_dict(),
+            sort_keys=True,
+        )
+    )
 
 
 @app.command()
