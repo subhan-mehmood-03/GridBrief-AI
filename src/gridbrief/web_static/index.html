@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="GridBrief AI — grounded ERCOT intelligence for energy professionals.">
+  <title>GridBrief AI · ERCOT Intelligence</title>
+  <link rel="stylesheet" href="/static/site.css"><script src="/static/site.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to intelligence</a>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="GridBrief AI home"><span class="brand-mark">GB</span><span>GridBrief <b>AI</b><small>ERCOT intelligence</small></span></a>
+    <nav aria-label="Primary"><a href="#desk">Desk</a><a href="#fuel">Fuel mix</a><a href="#newsletter">Briefing</a><a href="#lab">Data Lab</a></nav>
+    <div class="header-actions"><button id="wallboard" class="icon-button" type="button">Wallboard</button><button id="preferences" class="icon-button" type="button" aria-expanded="false">Preferences</button></div>
+  </header>
+  <section class="freshness" aria-label="Data freshness"><span class="live-dot"></span><strong id="fresh-status">Connecting</strong><span id="data-as-of">Data as of —</span><span id="source-health">Sources —</span></section>
+  <div class="ticker" aria-label="Latest market readings"><div id="ticker-track" class="ticker-track"><span>Loading ERCOT market data…</span></div></div>
+
+  <main id="main">
+    <section id="top" class="hero section-grid">
+      <div><p class="eyebrow">THE DAILY GRID SIGNAL</p><h1>Know what changed.<br><em>Know what matters.</em></h1><p class="lede">A grounded operating brief for the ERCOT market, built from official data and traceable evidence.</p></div>
+      <aside class="persona-card"><label for="persona">Your desk view</label><select id="persona"><option value="general">General</option><option value="market_analyst">Market Analyst</option><option value="grid_operations">Grid Operations & Reliability</option></select><p id="persona-note">A balanced view of system conditions, market movement, and risk.</p></aside>
+    </section>
+
+    <section id="desk" class="content-section"><div class="section-head"><div><p class="eyebrow">01 · DAILY DESK</p><h2>Today’s operating brief</h2></div><span class="asof" id="desk-asof">Updating…</span></div><div id="priorities" class="priority-grid loading-card">Loading priorities…</div><div class="desk-row"><article class="panel"><h3>Anomalies & percentiles</h3><div id="anomalies" class="empty">Calculating the current window…</div></article><article class="panel"><h3>Operating calendar</h3><div id="calendar" class="empty">No upcoming events reported.</div></article><article class="panel threshold"><h3>Your thresholds</h3><label>Alert when RT price exceeds <span class="sr-only">dollars per megawatt-hour</span><input id="price-threshold" type="number" value="500"> $/MWh</label><button id="save-threshold" type="button">Save locally</button><p id="threshold-status" aria-live="polite"></p></article></div></section>
+
+    <section class="content-section pulse-section"><div class="section-head"><div><p class="eyebrow">02 · OPERATING PULSE</p><h2>ERCOT at a glance</h2></div><div class="window-switch" role="group" aria-label="Chart time window"><button data-hours="24" class="active">24h</button><button data-hours="48">48h</button><button data-hours="168">7d</button></div></div><div id="pulse" class="pulse-grid loading-card">Loading operating pulse…</div></section>
+
+    <section id="intelligence" class="content-section"><div class="section-head"><div><p class="eyebrow">03 · ROLE-AWARE INTELLIGENCE</p><h2 id="role-heading">General intelligence</h2></div><span class="pill" id="coverage-pill">Window 24h</span></div><div id="role-kpis" class="kpi-grid"></div></section>
+
+    <section id="fuel" class="content-section"><div class="section-head"><div><p class="eyebrow">04 · SUPPLY STACK</p><h2>Fuel mix</h2></div><p>Charts and statistics follow the selected window.</p></div><div id="fuel-grid" class="fuel-grid loading-card">Loading fuel mix…</div></section>
+
+    <section id="risk" class="content-section split"><div><div class="section-head"><div><p class="eyebrow">05 · RELIABILITY</p><h2>Risk & readiness</h2></div></div><div id="reliability" class="panel loading-card">Loading reliability signals…</div><div id="risks" class="risk-list"></div></div><div><div class="section-head"><div><p class="eyebrow">06 · MARKET</p><h2>Regional view</h2></div></div><div id="market" class="panel loading-card">Loading regional prices…</div></div></section>
+
+    <section id="newsletter" class="content-section newsletter"><div class="section-head"><div><p class="eyebrow">07 · GRIDBRIEF EDITION</p><h2>Daily intelligence, cited</h2></div><div><button id="print-edition" type="button">Print</button><button id="export-edition" type="button">Export HTML</button></div></div><div class="newsletter-layout"><article id="edition" class="edition loading-card">Loading latest edition…</article><aside><h3>Edition quality</h3><div id="quality"></div><h3>Archive</h3><div id="archive"></div></aside></div></section>
+
+    <section id="lab" class="content-section"><div class="section-head"><div><p class="eyebrow">08 · DATA LAB</p><h2>Inspect the evidence</h2></div><button id="save-view">Save view</button></div><form id="lab-form" class="lab-controls"><label>Metric<select id="lab-metric"><option value="system_load">System load</option><option value="spp_rt">Real-time SPP</option><option value="spp_da">Day-ahead SPP</option><option value="fuel_mix_wind">Wind generation</option><option value="fuel_mix_solar">Solar generation</option><option value="fuel_mix_battery_storage">Battery storage</option></select></label><label>Location<input id="lab-location" placeholder="All locations"></label><label>Range<select id="lab-hours"><option value="24">24 hours</option><option value="48">48 hours</option><option value="168">7 days</option><option value="720">30 days</option></select></label><button type="submit">Run query</button><a id="csv-link" class="button" href="#">Download CSV</a></form><div id="lab-summary" class="kpi-grid"></div><div class="chart-panel"><svg id="lab-chart" class="chart" role="img" aria-label="Data Lab time series"></svg></div><div class="table-wrap"><table><caption>Exact observations</caption><thead><tr><th>Market time</th><th>Location</th><th>Value</th><th>Source</th></tr></thead><tbody id="lab-table"></tbody></table></div></section>
+  </main>
+
+  <button id="ask-launch" class="ask-launch" aria-controls="ask-panel" aria-expanded="false"><span>✦</span> Ask GridBrief AI</button>
+  <aside id="ask-panel" class="ask-panel" aria-label="Ask GridBrief AI" hidden><header><div><strong>Ask GridBrief AI</strong><small>Grounded answers · cited sources</small></div><button id="ask-close" aria-label="Close Ask AI">×</button></header><div id="ask-thread" class="ask-thread" aria-live="polite"><div class="assistant-message">Ask about current load, North Hub prices, DART, reserves, outages, batteries, or weather risk.</div></div><div id="suggestions" class="suggestions"><button>What is North Hub RT now?</button><button>How has load changed?</button><button>Any reliability risks?</button></div><form id="ask-form"><label class="sr-only" for="ask-input">Question</label><textarea id="ask-input" rows="2" maxlength="1000" placeholder="Ask about ERCOT…" required></textarea><button type="submit">Send</button></form></aside>
+  <dialog id="evidence-dialog"><div class="dialog-head"><h2>Evidence</h2><button id="evidence-close" aria-label="Close evidence">×</button></div><div id="evidence-content"></div></dialog>
+  <footer><span>GridBrief AI · Near-real-time public beta</span><span>Official data, transparent freshness, traceable claims.</span></footer>
+</body></html>
