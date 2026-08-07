@@ -62,11 +62,19 @@ class MetricSpec:
 
 
 METRIC_REGISTRY: dict[str, MetricSpec] = {
-    "spp": MetricSpec(
+    "spp_rt": MetricSpec(
         "Real-time settlement point price",
         "$/MWh",
         15,
         60,
+        ("HB_NORTH", "HB_SOUTH", "HB_WEST", "HB_HOUSTON"),
+        ("ercot",),
+    ),
+    "spp_da": MetricSpec(
+        "Day-ahead settlement point price",
+        "$/MWh",
+        60,
+        1_440,
         ("HB_NORTH", "HB_SOUTH", "HB_WEST", "HB_HOUSTON"),
         ("ercot",),
     ),
@@ -176,8 +184,8 @@ def _normalize_ercot(item: RawItem) -> list[TimeseriesRow]:
     if timestamp is None:
         return []
     dataset = payload.get("dataset")
-    if dataset == "spp":
-        return _row("spp", payload.get("Location") or "ERCOT", timestamp, payload.get("SPP"))
+    if dataset in {"spp_rt", "spp_da"}:
+        return _row(dataset, payload.get("Location") or "ERCOT", timestamp, payload.get("SPP"))
     ignored = {"dataset", "Time", "Interval Start", "Interval End"}
     rows: list[TimeseriesRow] = []
     if dataset == "load":

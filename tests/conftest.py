@@ -13,6 +13,7 @@ os.environ.setdefault(
 
 import pytest
 from sqlalchemy import text
+from sqlalchemy.exc import OperationalError
 
 from gridbrief.db import get_engine, run_migrations, session_scope
 from gridbrief.repository import Repository
@@ -20,10 +21,16 @@ from gridbrief.repository import Repository
 
 @pytest.fixture(scope="session")
 def engine():
-    return get_engine()
+    database_engine = get_engine()
+    try:
+        with database_engine.connect() as connection:
+            connection.execute(text("select 1"))
+    except OperationalError as exc:
+        pytest.skip(f"dedicated PostgreSQL test database is unavailable: {exc.orig}")
+    return database_engine
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def clean_schema(engine):
     """Drop everything and re-run migrations before each test so tests
     never depend on order or leak state into each other."""
@@ -35,6 +42,7 @@ def clean_schema(engine):
 
 
 @pytest.fixture
-def repo():
+def repo(clean_schema):
+    del clean_schema
     with session_scope() as session:
         yield Repository(session)

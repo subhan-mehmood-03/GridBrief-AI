@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import pytest
 from sqlalchemy import text
 
 from gridbrief.db import MIGRATIONS_DIR, applied_migrations, run_migrations
+
+pytestmark = pytest.mark.usefixtures("clean_schema")
 
 
 def test_migrations_run_on_empty_database(engine):
