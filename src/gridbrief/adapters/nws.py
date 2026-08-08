@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from datetime import UTC, datetime, timedelta
 from typing import Any
 from urllib.parse import urlencode
@@ -60,17 +61,30 @@ class NWSAdapter:
         }
 
     def _get(self, url: str) -> dict[str, Any]:
-        with urlopen(Request(url, headers=self.headers), timeout=self.timeout) as response:  # noqa: S310
-            return json.load(response)
+        for attempt in range(3):
+            try:
+                request = Request(url, headers=self.headers)
+                with urlopen(request, timeout=self.timeout) as response:  # noqa: S310
+                    return json.load(response)
+            except (OSError, ValueError):
+                if attempt == 2:
+                    raise
+                time.sleep(0.5 * (2**attempt))
+        raise RuntimeError("NWS request failed")
 
     def fetch(self, since: datetime, until: datetime) -> list[RawItem]:
         items = self._fetch_alerts(since, until)
         for location, (latitude, longitude) in FORECAST_POINTS.items():
-            metadata = self._get(f"{BASE_URL}/points/{latitude:.4f},{longitude:.4f}")
-            forecast_url = metadata.get("properties", {}).get("forecastHourly")
-            if not forecast_url:
+            try:
+                metadata = self._get(f"{BASE_URL}/points/{latitude:.4f},{longitude:.4f}")
+                forecast_url = metadata.get("properties", {}).get("forecastHourly")
+                if not forecast_url:
+                    continue
+                forecast = self._get(forecast_url).get("properties", {})
+            except (OSError, ValueError):
+                # NWS forecast offices fail independently. Preserve alerts and every healthy
+                # regional forecast instead of rejecting the entire Texas refresh.
                 continue
-            forecast = self._get(forecast_url).get("properties", {})
             updated = parse_timestamp(forecast.get("updated")) or datetime.now(UTC)
             periods = forecast.get("periods", [])
             for period in periods:

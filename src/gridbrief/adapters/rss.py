@@ -5,9 +5,11 @@ from __future__ import annotations
 import html
 import os
 import re
+import time
 from calendar import timegm
 from datetime import UTC, datetime
 from typing import Any
+from urllib.request import Request, urlopen
 
 from gridbrief.normalization import RawItem, build_raw_item, parse_timestamp
 
@@ -34,9 +36,7 @@ class RSSAdapter:
 
         items: list[RawItem] = []
         for feed_name, feed_url in self.feed_urls.items():
-            parsed = feedparser.parse(feed_url)
-            if parsed.bozo and not parsed.entries:
-                raise RuntimeError(f"Unable to parse RSS feed {feed_url}: {parsed.bozo_exception}")
+            parsed = self._fetch_feed(feedparser, feed_url)
             for entry in parsed.entries:
                 published = _entry_time(entry)
                 if published is None or not since <= published <= until:
@@ -61,6 +61,29 @@ class RSSAdapter:
                     )
                 )
         return items
+
+    @staticmethod
+    def _fetch_feed(feedparser: Any, feed_url: str) -> Any:
+        """Fetch a feed with an identified client and bounded transient retries."""
+        for attempt in range(3):
+            try:
+                request = Request(
+                    feed_url,
+                    headers={
+                        "Accept": "application/rss+xml, application/xml, text/xml",
+                        "User-Agent": "GridBrief-AI/1.0 (energy-data-ingestion)",
+                    },
+                )
+                with urlopen(request, timeout=30) as response:  # noqa: S310
+                    parsed = feedparser.parse(response.read())
+                if parsed.bozo and not parsed.entries:
+                    raise ValueError(str(parsed.bozo_exception))
+                return parsed
+            except (OSError, ValueError) as exc:
+                if attempt == 2:
+                    raise RuntimeError(f"Unable to retrieve RSS feed {feed_url}: {exc}") from exc
+                time.sleep(0.5 * (2**attempt))
+        raise RuntimeError(f"Unable to retrieve RSS feed {feed_url}")
 
 
 def _entry_time(entry: dict[str, Any]) -> datetime | None:
