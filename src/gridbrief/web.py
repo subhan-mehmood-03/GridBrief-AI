@@ -710,8 +710,7 @@ def create_app() -> FastAPI:
             "weather_wind_direction_forecast",
         )
         raw = {
-            metric: _query_series(metric, hours, future_hours=hours)
-            for metric in weather_metrics
+            metric: _query_series(metric, hours, future_hours=hours) for metric in weather_metrics
         }
 
         def normalize(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -741,8 +740,12 @@ def create_app() -> FastAPI:
 
     @app.get("/api/maps")
     def maps() -> dict[str, Any]:
+        temp_rows = _query_series("weather_temperature_forecast", 24, future_hours=24)
         temp = _latest_by_location(
-            _query_series("weather_temperature_forecast", 24, future_hours=24)
+            [
+                {**row, "location": WEATHER_ZONES.get(row["location"], row["location"])}
+                for row in temp_rows
+            ]
         )
         lmp_points = _query_series("lmp", 24) or _query_series("lmp", 8_760)
         lmp = _latest_by_location(lmp_points)
@@ -952,6 +955,7 @@ def main() -> None:
 
     settings = get_settings()
     if settings.automatic_refresh:
+
         def scheduler_target() -> None:
             _SCHEDULER_STATE["running"] = True
             _SCHEDULER_STATE["started_at"] = datetime.now(UTC).isoformat()

@@ -49,10 +49,7 @@ def normalize_text(value: str | None) -> str:
         return ""
 
     normalized = value.replace("\r\n", "\n").replace("\r", "\n")
-    lines = [
-        _HORIZONTAL_SPACE_RE.sub(" ", line).strip()
-        for line in normalized.split("\n")
-    ]
+    lines = [_HORIZONTAL_SPACE_RE.sub(" ", line).strip() for line in normalized.split("\n")]
     normalized = "\n".join(lines)
     normalized = _EXTRA_BLANK_LINES_RE.sub("\n\n", normalized)
 
@@ -95,9 +92,7 @@ def chunk_document(
     )
 
     if len(prefix_token_ids) >= max_tokens:
-        raise ValueError(
-            "document title is too long to leave room for chunk text"
-        )
+        raise ValueError("document title is too long to leave room for chunk text")
 
     body_token_ids = tokenizer.encode(
         clean_body,
@@ -117,9 +112,7 @@ def chunk_document(
 
     step_size = body_budget - overlap_tokens
     if step_size <= 0:
-        raise ValueError(
-            "overlap_tokens leaves no room for new document content"
-        )
+        raise ValueError("overlap_tokens leaves no room for new document content")
 
     chunks: list[ChunkDraft] = []
     start = 0
@@ -141,9 +134,7 @@ def chunk_document(
                 ChunkDraft(
                     position=position,
                     text=chunk_text,
-                    token_count=(
-                        len(prefix_token_ids) + len(body_window)
-                    ),
+                    token_count=(len(prefix_token_ids) + len(body_window)),
                 )
             )
             position += 1

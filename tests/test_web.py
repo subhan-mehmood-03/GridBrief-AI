@@ -41,9 +41,7 @@ def test_required_product_routes_are_registered() -> None:
 def test_local_automation_reports_live_scheduler_state(monkeypatch) -> None:
     monkeypatch.setenv("GRIDBRIEF_AUTOMATIC_REFRESH", "true")
     get_settings.cache_clear()
-    web_module._SCHEDULER_STATE.update(
-        {"running": True, "started_at": "2026-08-07T12:00:00+00:00"}
-    )
+    web_module._SCHEDULER_STATE.update({"running": True, "started_at": "2026-08-07T12:00:00+00:00"})
     try:
         body = TestClient(create_app()).get("/api/automation").json()
         assert body["enabled"] is True
@@ -106,7 +104,18 @@ def test_frontend_humanizes_calculations_freshness_and_live_ticker() -> None:
     assert "function startTicker(" in javascript
     assert "requestAnimationFrame(advance)" in javascript
     assert "style.setProperty('transform'" in javascript
-    assert "/assets/site.js?v=35" in html
+    assert "/assets/site.js?v=36" in html
+
+
+def test_frontend_prefetches_ranges_and_updates_studio_preview() -> None:
+    javascript = (
+        Path(__file__).parents[1] / "src" / "gridbrief" / "web_static" / "site.js"
+    ).read_text(encoding="utf-8")
+    assert "function prefetchRanges()" in javascript
+    assert "[24,48,72].filter" in javascript
+    assert "syncStudioSections(state.studioEdition)" in javascript
+    assert "$('#studio-sections').addEventListener('change'" in javascript
+    assert "async function guardedAsk(" in javascript
 
 
 def test_public_generation_requires_admin_key(monkeypatch) -> None:

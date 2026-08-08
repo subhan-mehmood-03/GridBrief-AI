@@ -233,6 +233,7 @@ def test_empty_vector_results_use_recent_document_fallback(monkeypatch) -> None:
         url="https://api.weather.gov/alerts/17",
     )
     repository = SimpleNamespace(get_recent_documents=lambda **kwargs: [document])
+
     class Context:
         def __enter__(self):
             return object()

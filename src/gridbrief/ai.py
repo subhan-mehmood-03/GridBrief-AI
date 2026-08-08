@@ -83,9 +83,7 @@ SUBJECT_ALIASES = {
     "outages_total": ("total outage", "generation outage", "outages"),
     "system_capacity": ("system capacity", "available capacity", "generation capacity"),
     "grid_frequency": ("grid frequency", "frequency"),
-    "storage_net_output": (
-        "battery", "batteries", "storage", "bess", "charging", "discharging"
-    ),
+    "storage_net_output": ("battery", "batteries", "storage", "bess", "charging", "discharging"),
     "wind_forecast": ("wind forecast", "forecast wind"),
     "solar_forecast": ("solar forecast", "forecast solar"),
     "wind_gen": ("wind generation", "wind output"),
@@ -317,8 +315,7 @@ def _composite_answer(plan: AskQueryPlan) -> dict[str, Any]:
             key, source = _source_for_observation(observation, metric)
             sources[key] = source
             clauses.append(
-                f"{label} at {float(observation['value']):,.0f} {observation['unit']} "
-                f"[calc:{key}]"
+                f"{label} at {float(observation['value']):,.0f} {observation['unit']} [calc:{key}]"
             )
         total = sum(float(observation["value"]) for _, _, observation in positive)
         leader_metric, leader_label, leader = positive[0]
@@ -333,9 +330,7 @@ def _composite_answer(plan: AskQueryPlan) -> dict[str, Any]:
             "unit": "%",
         }
         component_text = (
-            clauses[0]
-            if len(clauses) == 1
-            else f"{', '.join(clauses[:-1])}, and {clauses[-1]}"
+            clauses[0] if len(clauses) == 1 else f"{', '.join(clauses[:-1])}, and {clauses[-1]}"
         )
         answer = (
             f"ERCOT's recorded fuel mix is currently led by {component_text}. "
@@ -372,8 +367,7 @@ def _composite_answer(plan: AskQueryPlan) -> dict[str, Any]:
         key, source = _source_for_observation(observation, metric)
         sources[key] = source
         clauses.append(
-            f"{label} {float(observation['value']):,.2f} {observation['unit']} "
-            f"[calc:{key}]"
+            f"{label} {float(observation['value']):,.2f} {observation['unit']} [calc:{key}]"
         )
     timestamps = [str(row[2]["timestamp"]) for row in rows]
     answer = (
@@ -603,8 +597,7 @@ def _direct_answer(plan: AskQueryPlan) -> dict[str, Any]:
         )
     else:
         answer = (
-            f"{location}'s {plan.statistic} {label} is "
-            f"{value:.2f} {summary['unit']} {citation}. "
+            f"{location}'s {plan.statistic} {label} is {value:.2f} {summary['unit']} {citation}. "
         )
     if plan.subject == "storage_net_output":
         behavior = "discharging" if value > 0 else "charging" if value < 0 else "idle"
@@ -800,9 +793,8 @@ def _narrative_answer(question: str, plan: AskQueryPlan) -> dict[str, Any]:
     cited_ids = {int(value) for value in re.findall(r"\[cite:(\d+)\]", answer)}
     sources = {
         f"doc-{item['document_id']}": {
-            "publisher": item.get("source") or (
-                "National Weather Service" if "weather.gov" in str(item.get("url")) else "ERCOT"
-            ),
+            "publisher": item.get("source")
+            or ("National Weather Service" if "weather.gov" in str(item.get("url")) else "ERCOT"),
             "document_id": item["document_id"],
             "title": item.get("title"),
             "published_at": item.get("published_at"),

@@ -152,8 +152,7 @@ class NWSAdapter:
                 if part
             )
             text = (
-                f"GRIDBRIEF_ALERT_METADATA\n{metadata}\nEND_GRIDBRIEF_ALERT_METADATA\n\n"
-                f"{narrative}"
+                f"GRIDBRIEF_ALERT_METADATA\n{metadata}\nEND_GRIDBRIEF_ALERT_METADATA\n\n{narrative}"
             )
             items.append(
                 build_raw_item(

@@ -10,7 +10,7 @@ services:
       - key: GRIDBRIEF_AUTOMATIC_REFRESH
         value: "false"
       - key: GRIDBRIEF_RETRIEVAL_BACKEND
-        value: pgvector
+        value: lexical
       - key: GRIDBRIEF_DATABASE_URL
         sync: false
       - key: GRIDBRIEF_CONTACT_EMAIL

@@ -10,6 +10,7 @@ functions in as subcommands there, e.g. with Typer:
 
 Both are safe to run repeatedly — already-applied migrations are skipped.
 """
+
 from __future__ import annotations
 
 from .db import run_migrations
