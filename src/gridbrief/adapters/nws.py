@@ -55,9 +55,12 @@ class NWSAdapter:
 
     def __init__(self, contact_email: str, timeout: float = 30.0):
         self.timeout = timeout
+        safe_contact = re.sub(r"[\x00-\x1f\x7f]+", "", contact_email).strip()
+        if not safe_contact:
+            safe_contact = "contact@example.com"
         self.headers = {
             "Accept": "application/geo+json",
-            "User-Agent": f"GridBrief-AI/0.1 ({contact_email})",
+            "User-Agent": f"GridBrief-AI/1.0 ({safe_contact})",
         }
 
     def _get(self, url: str) -> dict[str, Any]:
