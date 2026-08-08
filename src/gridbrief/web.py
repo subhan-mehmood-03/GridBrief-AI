@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from fastapi import Body, FastAPI, Header, HTTPException, Query, Request
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -130,7 +131,13 @@ def _query_series(
     end = datetime.now(UTC)
     with session_scope() as session:
         stmt = (
-            select(Timeseries, Source.name)
+            select(
+                Timeseries.ts,
+                Timeseries.value,
+                Timeseries.unit,
+                Timeseries.settlement_point,
+                Source.name.label("source_name"),
+            )
             .join(Source, Source.id == Timeseries.source_id)
             .where(
                 Timeseries.metric == _canonical(metric),
@@ -149,11 +156,9 @@ def _query_series(
             "value": float(row.value),
             "unit": row.unit,
             "location": row.settlement_point or "SYSTEM",
-            "source": _source_label(source),
-            "source_id": row.source_id,
-            "observation_id": row.id,
+            "source": _source_label(row.source_name),
         }
-        for row, source in rows
+        for row in rows
     ]
 
 
@@ -359,6 +364,7 @@ def _weather_alerts(hours: int = 168) -> list[dict[str, Any]]:
 def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(title="GridBrief AI", version="1.0.0", docs_url="/api/docs")
+    app.add_middleware(GZipMiddleware, minimum_size=1_000, compresslevel=6)
 
     @app.middleware("http")
     async def secure_responses(request: Request, call_next):
@@ -377,6 +383,10 @@ def create_app() -> FastAPI:
                 ),
             }
         )
+        if request.method == "GET" and request.url.path.startswith("/api/"):
+            response.headers.setdefault(
+                "Cache-Control", "public, max-age=60, stale-while-revalidate=300"
+            )
         return response
 
     @app.exception_handler(Exception)
@@ -700,7 +710,7 @@ def create_app() -> FastAPI:
             "weather_wind_direction_forecast",
         )
         raw = {
-            metric: _query_series(metric, max(hours, 168), future_hours=hours)
+            metric: _query_series(metric, hours, future_hours=hours)
             for metric in weather_metrics
         }
 
@@ -717,15 +727,13 @@ def create_app() -> FastAPI:
                 metric: [row for row in rows if row["location"] == zone]
                 for metric, rows in normalized.items()
             }
-        series = {**normalized, "temperature_forecast": normalized["weather_temperature_forecast"]}
         return {
             "hours": hours,
             "from": datetime.now(UTC).isoformat(),
             "to": end.isoformat(),
             "selected_zone": zone,
             "zones": zones,
-            "series": series,
-            "history": {key: value for key, value in series.items()},
+            "series": normalized,
             "disclosure": (
                 "Forecasts are supplied by the National Weather Service and may be revised."
             ),
@@ -733,7 +741,9 @@ def create_app() -> FastAPI:
 
     @app.get("/api/maps")
     def maps() -> dict[str, Any]:
-        temp = _latest_by_location(weather(24)["series"]["weather_temperature_forecast"])
+        temp = _latest_by_location(
+            _query_series("weather_temperature_forecast", 24, future_hours=24)
+        )
         lmp_points = _query_series("lmp", 24) or _query_series("lmp", 8_760)
         lmp = _latest_by_location(lmp_points)
         return {

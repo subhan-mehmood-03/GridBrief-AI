@@ -103,7 +103,9 @@ def test_frontend_humanizes_calculations_freshness_and_live_ticker() -> None:
     assert "@keyframes ticker-live" in stylesheet
     assert "prefers-reduced-motion:reduce" in stylesheet
     assert "/assets/site.css?v=25" in html
-    assert "/assets/site.js?v=33" in html
+    assert "function startTicker(" in javascript
+    assert "track.animate(" in javascript
+    assert "/assets/site.js?v=34" in html
 
 
 def test_public_generation_requires_admin_key(monkeypatch) -> None:
