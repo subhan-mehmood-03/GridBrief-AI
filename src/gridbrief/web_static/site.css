@@ -78,3 +78,7 @@ small{font-size:12px}.intel-section,.weather-section,.daily-section,.brief-layou
 .ticker .ticker-track.ticker-ready{animation:ticker-live 24s linear infinite!important;animation-play-state:running!important;will-change:transform!important}
 .ticker:hover .ticker-track.ticker-ready{animation-play-state:running!important}
 @media(prefers-reduced-motion:reduce){.ticker .ticker-track.ticker-ready{animation:ticker-live 24s linear infinite!important;animation-play-state:running!important;will-change:transform!important}}
+
+/* The ticker position is driven frame-by-frame in site.js. Inline transforms win
+   over every motion preference while this rule prevents competing CSS timelines. */
+.ticker .ticker-track,.ticker:hover .ticker-track{animation:none!important;animation-play-state:running!important;will-change:transform!important}
