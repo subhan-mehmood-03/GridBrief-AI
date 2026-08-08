@@ -38,16 +38,21 @@ def test_market_plan_keeps_price_section_for_structured_evidence() -> None:
     assert sections[0] == "Prices"
 
 
-def test_generation_initializes_legacy_langchain_globals(monkeypatch) -> None:
-    import langchain
+def test_generation_initializes_langchain_core_globals() -> None:
+    from langchain_core.globals import (
+        get_debug,
+        get_llm_cache,
+        get_verbose,
+        set_debug,
+        set_verbose,
+    )
 
-    monkeypatch.delattr(langchain, "debug", raising=False)
-    monkeypatch.delattr(langchain, "verbose", raising=False)
-    monkeypatch.delattr(langchain, "llm_cache", raising=False)
+    set_debug(True)
+    set_verbose(True)
 
     with pytest.raises(ValueError, match="role must be one of"):
         generate_edition(role="invalid")  # type: ignore[arg-type]
 
-    assert langchain.debug is False
-    assert langchain.verbose is False
-    assert langchain.llm_cache is None
+    assert get_debug() is False
+    assert get_verbose() is False
+    assert get_llm_cache() is None
