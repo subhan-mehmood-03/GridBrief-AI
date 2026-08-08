@@ -75,6 +75,7 @@ def test_rtm_timeline_questions_do_not_route_to_price() -> None:
         "When does the ERCOT real-time market close?",
         "What is the RTM submission cutoff?",
         "What time is real time scheduled?",
+        "What is the timing for ERCOT RT?",
     )
     for question in questions:
         plan = understand_question(question, role="market_analyst")
