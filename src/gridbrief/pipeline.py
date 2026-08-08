@@ -129,6 +129,13 @@ def generate_edition(
     window_start: datetime | None = None,
 ) -> GraphState:
     """Run one graph for scheduled, on-demand, or breaking generation."""
+    # Initialize compatibility globals through the supported API. This keeps
+    # langchain-core 0.3 usable when an unrelated LangChain 1.x install is present.
+    from langchain_core.globals import set_debug, set_llm_cache, set_verbose
+
+    set_debug(False)
+    set_verbose(False)
+    set_llm_cache(None)
     if role not in VALID_ROLES:
         raise ValueError(f"role must be one of: {', '.join(VALID_ROLES)}")
     if edition_mode not in VALID_MODES:

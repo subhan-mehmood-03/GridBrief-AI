@@ -4,17 +4,18 @@ import json
 from typing import Annotated
 
 import typer
+from sqlalchemy import select
 
 from gridbrief.ai import generate_edition_json
 from gridbrief.cli_db import cmd_init_db, cmd_migrate
+from gridbrief.db import session_scope
+from gridbrief.evaluation import evaluate_latest_editions
 from gridbrief.indexing import index_documents
 from gridbrief.ingestion import SUPPORTED_SOURCES, ingest_many
+from gridbrief.models import Edition
+from gridbrief.scheduler import run_scheduler
 
 app = typer.Typer(help="GridBrief AI operational commands.", no_args_is_help=True)
-
-
-def _not_implemented(operation: str) -> None:
-    typer.echo(f"{operation} is wired but not implemented in the project skeleton.")
 
 
 @app.command("init-db")
@@ -118,17 +119,44 @@ def generate(
 
 @app.command()
 def evaluate() -> None:
-    """Run quality evaluation (placeholder)."""
-    _not_implemented("evaluate")
+    """Evaluate the latest persona editions against PRD release gates."""
+    report = evaluate_latest_editions()
+    typer.echo(json.dumps(report, indent=2, sort_keys=True))
+    if not report["passed"]:
+        raise typer.Exit(code=1)
 
 
 @app.command()
-def archive() -> None:
-    """Archive editions (placeholder)."""
-    _not_implemented("archive")
+def archive(
+    limit: Annotated[int, typer.Option(help="Maximum editions to list.")] = 20,
+) -> None:
+    """List the newest saved editions for operational review."""
+    if limit < 1 or limit > 100:
+        raise typer.BadParameter("--limit must be between 1 and 100")
+    with session_scope() as session:
+        editions = session.scalars(
+            select(Edition).order_by(Edition.generated_at.desc()).limit(limit)
+        ).all()
+        payload = [
+            {
+                "id": edition.id,
+                "role": edition.role,
+                "status": edition.status,
+                "generated_at": edition.generated_at.isoformat(),
+            }
+            for edition in editions
+        ]
+    typer.echo(json.dumps(payload, indent=2))
 
 
 @app.command()
-def scheduler() -> None:
-    """Run the local scheduler (placeholder)."""
-    _not_implemented("scheduler")
+def scheduler(
+    once: Annotated[bool, typer.Option(help="Run one refresh and exit.")] = False,
+    interval_minutes: Annotated[int, typer.Option(help="Refresh interval.")] = 60,
+) -> None:
+    """Run local refresh automation when the web process owns scheduling."""
+    try:
+        run_scheduler(once=once, interval_minutes=interval_minutes)
+    except (RuntimeError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=1) from exc

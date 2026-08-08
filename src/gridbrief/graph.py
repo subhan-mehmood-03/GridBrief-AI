@@ -13,6 +13,7 @@ from langgraph.graph import END, START, StateGraph
 
 from gridbrief.db import session_scope
 from gridbrief.llm import LLMError, get_llm_client
+from gridbrief.models import Source
 from gridbrief.repository import Repository
 from gridbrief.retrieval import SearchFilters, vector_search
 
@@ -164,10 +165,15 @@ def planner(state: GraphState) -> dict[str, Any]:
     else:
         selected = ranked[:12]
         present = {item["topic"] for item in selected if item["importance"] >= 0.45}
+        required = {
+            "general": set(),
+            "market_analyst": {"Prices"},
+            "grid_operations": {"Grid Conditions", "Weather Impact"},
+        }[role]
         sections = []
         for section in ROLE_ORDER[role]:
             topic = SECTION_TOPIC[section]
-            include = section == "Executive Summary" or topic in present
+            include = section == "Executive Summary" or section in required or topic in present
             if section == "Notable Events":
                 include = any(item["importance"] >= 0.75 for item in selected)
             if section == "Outlook":
@@ -202,7 +208,14 @@ def retriever(state: GraphState) -> dict[str, Any]:
     """Build section grounding bundles through Person 4 search and Person 2 repository."""
     bundles: dict[str, Any] = {}
     metrics_by_topic = {
-        "grid": ("system_load",),
+        "grid": (
+            "system_load",
+            "grid_frequency",
+            "system_capacity",
+            "available_capacity_reserve",
+            "storage_net_output",
+            "outages_unplanned",
+        ),
         "prices": ("spp_rt", "spp_da"),
         "renewables": ("fuel_mix_wind", "fuel_mix_solar", "fuel_mix_battery_storage"),
         "market": ("as_price_regup",),
@@ -240,6 +253,14 @@ def retriever(state: GraphState) -> dict[str, Any]:
                         topic=topic,
                         limit=5,
                     )
+                    source_names = {
+                        document.source_id: (
+                            session.get(Source, document.source_id).name
+                            if session.get(Source, document.source_id)
+                            else "Official source"
+                        )
+                        for document in documents
+                    }
                     chunks = [
                         {
                             "chunk_id": document.chunk_ids[0] if document.chunk_ids else None,
@@ -247,7 +268,7 @@ def retriever(state: GraphState) -> dict[str, Any]:
                             "title": document.title,
                             "text": document.text or "",
                             "score": 0.0,
-                            "source": None,
+                            "source": source_names.get(document.source_id, "Official source"),
                             "topic": document.topic,
                             "published_at": (
                                 document.published_at.isoformat()
@@ -314,13 +335,28 @@ def _evidence_prompt(bundle: dict[str, Any]) -> list[dict[str, Any]]:
         {
             "document_id": chunk["document_id"],
             "title": chunk.get("title"),
-            "text": chunk["text"],
+            "text": _reader_evidence_text(chunk),
             "published_at": chunk.get("published_at"),
             "url": chunk.get("url"),
         }
         for chunk in bundle.get("chunks", [])
         if chunk.get("text") and chunk.get("document_id") is not None
     ]
+
+
+def _reader_evidence_text(item: dict[str, Any]) -> str:
+    """Return evidence content without machine-only ingestion metadata."""
+    title = " ".join(str(item.get("title") or "").split()).strip()
+    text = re.sub(
+        r"GRIDBRIEF_ALERT_METADATA.*?END_GRIDBRIEF_ALERT_METADATA",
+        "",
+        str(item.get("text") or ""),
+        flags=re.DOTALL,
+    )
+    text = " ".join(text.split()).strip()
+    if title and "weather.gov" in str(item.get("url") or ""):
+        return title
+    return text or title
 
 
 def _structured_evidence(bundle: dict[str, Any]) -> list[dict[str, Any]]:
@@ -332,13 +368,18 @@ def _fallback_draft(
 ) -> str:
     bullets = []
     for item in evidence[:3]:
-        sentence = re.split(r"(?<=[.!?])\s+", " ".join(item["text"].split()))[0]
+        sentence = re.split(r"(?<=[.!?])\s+", item["text"])[0]
         if sentence:
             bullets.append(f"- {sentence} [cite:{item['document_id']}]")
     labels = {
         "spp_rt": "Real-time SPP",
         "spp_da": "Day-ahead SPP",
         "system_load": "System load",
+        "grid_frequency": "Grid frequency",
+        "system_capacity": "System capacity",
+        "available_capacity_reserve": "Available capacity reserve",
+        "storage_net_output": "Storage net output",
+        "outages_unplanned": "Unplanned outages",
         "fuel_mix_wind": "Wind generation",
         "fuel_mix_solar": "Solar generation",
         "fuel_mix_battery_storage": "Battery storage output",

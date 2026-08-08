@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#07110f">
+  <title>GridBrief AI — ERCOT Intelligence</title>
+  <link rel="stylesheet" href="/assets/site.css?v=25">
+  <style>.region-grid>button{position:relative;overflow:hidden;border:1px solid #29473c;border-radius:5px;padding:16px;text-align:left;color:var(--text);background:linear-gradient(135deg,rgba(184,243,74,var(--heat)),#0a1713 70%)}.region-grid>button span,.region-grid>button b,.region-grid>button small{display:block}.region-grid>button span{font:8px var(--mono);text-transform:uppercase}.region-grid>button b{font-size:18px;margin:8px 0}.region-grid>button small{font-size:8px;color:#bfd0c7}.answer-chart{margin:6px 0 0 6px;padding:6px 9px;border:1px solid #36564a;border-radius:20px;background:transparent;color:var(--cyan);font:8px var(--mono)}</style>
+</head>
+<body>
+  <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="GridBrief home">
+      <span class="brand-mark"><i></i><i></i><i></i></span>
+      <span>GRIDBRIEF <b>AI</b></span>
+    </a>
+    <nav><a href="#intelligence">Intelligence</a><a href="#weather">Weather</a><a href="#brief">Brief</a><a href="#studio">Studio</a><a href="#data-lab">Data lab</a><a href="#ask">Ask AI</a></nav>
+    <div class="top-actions"><button class="theme-toggle" id="theme-toggle" aria-label="Switch color theme" title="Color theme follows your system by default">◐ <span>THEME</span></button><div class="system-pill"><span></span><b>ERCOT</b> LIVE</div></div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="eyebrow"><span>ERCOT INTELLIGENCE DESK</span><span id="hero-date">Loading edition</span></div>
+      <div class="hero-grid">
+        <div>
+          <h1>The grid,<br><em>made legible.</em></h1>
+          <p class="lede">A source-grounded view of Texas power—load, prices, generation, outages, and weather—organized for decisions, not dashboards.</p>
+        </div>
+        <div class="pulse-card">
+          <div class="pulse-head"><span>Grid pulse</span><span class="live-dot">LIVE DATA</span></div>
+          <div class="pulse-value" id="load-value">—</div>
+          <div class="pulse-label">LATEST SYSTEM LOAD</div>
+          <svg class="sparkline" id="load-spark" viewBox="0 0 420 90" preserveAspectRatio="none"></svg>
+          <div class="pulse-foot"><span id="load-range">Loading range…</span><span id="load-time">—</span></div>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <a class="button primary" href="#brief">Read today’s brief <span>↓</span></a>
+        <button class="button ghost" id="generate-button">Generate fresh edition <span>↻</span></button>
+      </div>
+    </section>
+
+    <section class="ticker" aria-label="Latest indicators">
+      <div class="ticker-track" id="ticker-track"></div>
+    </section>
+
+    <section class="daily-section" id="daily">
+      <header class="section-heading"><div><span class="kicker">YOUR DAILY DESK</span><h2>Start with<br>what needs attention.</h2></div><div class="daily-actions"><button id="preferences-button">Preferences</button><button id="wallboard-button">Wallboard</button></div></header>
+      <div class="automation-line" id="automation-line">Checking automatic refresh…</div>
+      <div class="daily-grid"><article><header><span>01</span><h3>Morning priorities</h3></header><div id="priority-list"><p class="loader">Reading current conditions…</p></div></article><article><header><span>02</span><h3>Historical context</h3></header><div id="anomaly-list"><p class="loader">Comparing recent history…</p></div></article><article><header><span>03</span><h3>Operating calendar</h3></header><div id="operating-calendar"><p class="loader">Building the operating timeline…</p></div></article></div>
+      <div class="user-alerts"><header><span class="kicker">PERSONAL ALERTS</span><small>Evaluated locally against your thresholds</small></header><div id="personal-alerts"></div></div>
+    </section>
+
+    <section class="intel-section" id="intelligence">
+      <header class="section-heading">
+        <div><span class="kicker">OPERATING PICTURE</span><h2>From readings<br>to decisions.</h2></div>
+        <p class="heading-copy">A professional view of system demand, reliability exposure, market conditions, renewable performance, and active risk signals.</p>
+      </header>
+      <div class="intel-kpis" id="intel-kpis"></div>
+      <div class="change-board"><header><span class="kicker">WHAT CHANGED SINCE YESTERDAY</span><small>Latest reading compared with the nearest reading about 24 hours earlier</small></header><div id="change-board"></div></div>
+      <div class="intel-grid">
+        <article class="intel-panel wide"><header><div><span class="panel-index">01</span><h3>Reliability posture</h3></div><span class="panel-tag">SYSTEM</span></header><div id="reliability-panel"></div></article>
+        <article class="intel-panel wide"><header><div><span class="panel-index">02</span><h3>Grid operations & reserves</h3></div><span class="panel-tag">REAL TIME + 7 DAY</span></header><div id="operations-panel"></div></article>
+        <article class="intel-panel"><header><div><span class="panel-index">03</span><h3>Renewable performance</h3></div><span class="panel-tag">ACTUAL vs FORECAST</span></header><div id="renewable-panel"></div></article>
+        <article class="intel-panel"><header><div><span class="panel-index">04</span><h3>Market hubs</h3></div><span class="panel-tag">$/MWh</span></header><div id="market-panel"></div></article>
+        <article class="intel-panel"><header><div><span class="panel-index">05</span><h3>Regional weather & demand</h3></div><span class="panel-tag">ERCOT ZONES</span></header><div id="regional-panel"></div></article>
+        <article class="intel-panel wide"><header><div><span class="panel-index">06</span><h3>Active risk watch</h3></div><span class="panel-tag">NWS · TEXAS</span></header><div id="risk-panel"></div></article>
+      </div>
+    </section>
+
+    <section class="weather-section" id="weather">
+      <header class="section-heading">
+        <div><span class="kicker">WEATHER INTELLIGENCE · NWS HOURLY OUTLOOK</span><h2>Forecast the conditions.<br>Read the grid impact.</h2></div>
+        <p class="heading-copy">Temperature alone misses the operating picture. Track dew point, humidity, precipitation probability, wind speed and direction, and active alerts across representative ERCOT weather-zone points.</p>
+      </header>
+      <div class="weather-controls">
+        <label>ERCOT WEATHER ZONE<select id="weather-zone"><option value="">Loading zones…</option></select></label>
+        <div class="weather-range" id="weather-range"><button class="active" data-hours="24">24H</button><button data-hours="48">48H</button><button data-hours="72">72H</button></div>
+        <span id="weather-updated">Loading forecast…</span>
+      </div>
+      <div class="weather-cards" id="weather-cards"></div>
+      <div class="weather-plots">
+        <article><header><div><span>THERMAL COMFORT</span><h3>Temperature & dew point</h3></div><button data-weather-chart="thermal" aria-label="Expand temperature and dew point chart">↗</button></header><div id="weather-thermal"></div></article>
+        <article><header><div><span>MOISTURE & RAIN</span><h3>Humidity & precipitation chance</h3></div><button data-weather-chart="moisture" aria-label="Expand humidity and precipitation chart">↗</button></header><div id="weather-moisture"></div></article>
+        <article><header><div><span>WIND PROFILE</span><h3>Speed & direction</h3></div><button data-weather-chart="wind" aria-label="Expand wind forecast chart">↗</button></header><div id="weather-wind"></div></article>
+      </div>
+      <div class="weather-impact" id="weather-impact"></div>
+      <p class="weather-disclosure" id="weather-disclosure"></p>
+    </section>
+
+    <section class="map-section" id="maps">
+      <header class="section-heading"><div><span class="kicker">SPATIAL INTELLIGENCE</span><h2>See where conditions<br>are diverging.</h2></div><p class="heading-copy">Representative zone temperatures and genuine ERCOT trading-hub LMPs, shown with explicit geographic limitations.</p></header>
+      <div class="map-grid">
+        <article class="map-card" data-map="temperature"><header><div><span>NWS FORECAST</span><h3>Temperature by weather zone</h3></div><div class="map-head"><small id="temperature-map-time">Loading…</small><div class="map-tools" aria-label="Temperature map controls"><button data-map-action="out" title="Zoom out">−</button><button data-map-action="reset" title="Reset zoom">100%</button><button data-map-action="in" title="Zoom in">+</button><button data-map-action="expand" title="Open large map">↗</button></div></div></header><div id="temperature-map" class="texas-map"><p class="loader">Loading temperature map…</p></div><p id="temperature-map-note" class="map-note"></p></article>
+        <article class="map-card" data-map="lmp"><header><div><span>ERCOT REAL-TIME SCED</span><h3>Trading-hub LMP map</h3></div><div class="map-head"><small id="lmp-map-time">Awaiting LMP refresh</small><div class="map-tools" aria-label="LMP map controls"><button data-map-action="out" title="Zoom out">−</button><button data-map-action="reset" title="Reset zoom">100%</button><button data-map-action="in" title="Zoom in">+</button><button data-map-action="expand" title="Open large map">↗</button></div></div></header><div id="lmp-map" class="texas-map"><p class="loader">Loading genuine LMP data…</p></div><p id="lmp-map-note" class="map-note"></p></article>
+      </div>
+    </section>
+
+    <section class="brief-layout" id="brief">
+      <aside class="rail">
+        <p class="rail-label">EDITION VIEW</p>
+        <div class="role-switch" id="role-switch">
+          <button class="active" data-role="general">General</button>
+          <button data-role="market_analyst">Market analyst</button>
+          <button data-role="grid_operations">Grid operations</button>
+        </div>
+        <p class="role-description" id="role-description">A balanced briefing across reliability, prices, generation, and weather.</p>
+        <div class="rail-status">
+          <span>DATA AS OF</span><strong id="as-of">—</strong>
+          <span>QUALITY GATE</span><strong class="verified">● VERIFIED</strong>
+        </div>
+        <nav class="section-nav" id="section-nav"></nav>
+      </aside>
+
+      <article class="briefing">
+        <header class="brief-header">
+          <div><span class="kicker">DAILY SYSTEM BRIEF</span><h2>What matters now</h2></div>
+          <button class="source-button" id="all-sources">Sources <span id="source-count">0</span></button>
+        </header>
+        <div class="quality-strip" id="quality-strip"></div>
+        <div id="brief-content" class="brief-content"><div class="loader">Building the intelligence view…</div></div>
+      </article>
+    </section>
+
+    <section class="studio-section" id="studio">
+      <header class="section-heading"><div><span class="kicker">NEWSLETTER STUDIO</span><h2>Turn the system<br>into a publication.</h2></div><p class="heading-copy">Choose an audience and scope, generate through the verified LangGraph pipeline, then publish or export the grounded edition.</p></header>
+      <div class="studio-grid"><div class="studio-controls"><label>AUDIENCE<select id="studio-role"><option value="general">General / executive</option><option value="market_analyst">Market analyst</option><option value="grid_operations">Grid operations & reliability</option></select></label><label>EDITION TYPE<select id="studio-mode"><option value="on_demand">On demand</option><option value="scheduled_daily">Daily consolidated</option><option value="breaking">Breaking update</option></select></label><fieldset><legend>ROLE-SPECIFIC SECTIONS</legend><div id="studio-sections"></div></fieldset><button id="studio-generate">Generate verified edition</button><div class="studio-actions"><button id="studio-print">Print / Save PDF</button><button id="studio-download">Download HTML</button></div></div><div class="studio-preview"><span class="kicker">LIVE EDITION PREVIEW</span><div id="studio-preview"><p class="loader">The selected role’s approved edition will appear here.</p></div></div></div>
+    </section>
+
+    <section class="mix-section" id="mix">
+      <header class="section-heading">
+        <div><span class="kicker">Fuel mix · GENERATION LANDSCAPE</span><h2>Every fuel. One system.</h2></div>
+        <div class="range-switch" id="range-switch"><button data-hours="24" class="active">24H</button><button data-hours="48">48H</button><button data-hours="168">7D</button></div>
+      </header>
+      <p class="section-intro">Compact trend cards make the overall mix easy to scan. Open any card for a detailed, interactive view with exact values.</p>
+      <div class="mix-total"><div><span>Latest tracked generation</span><strong id="mix-total">—</strong></div><div class="mix-bar" id="mix-bar"></div></div>
+      <div class="chart-grid" id="fuel-grid"></div>
+    </section>
+
+    <section class="lab-section" id="data-lab">
+      <header class="section-heading"><div><span class="kicker">ANALYST DATA LAB</span><h2>Explore the<br>underlying system.</h2></div><p class="heading-copy">Select any stored metric, change the historical range, filter a location, inspect observations, and export the evidence as CSV.</p></header>
+      <div class="lab-controls">
+        <label>DATASET<select id="lab-metric"></select></label>
+        <label>RANGE<select id="lab-hours"><option value="24">24 hours</option><option value="168">7 days</option><option value="720">30 days</option><option value="8760">1 year</option></select></label>
+        <label>LOCATION / MARKET AREA<select id="lab-location" aria-label="Location or market area"><option value="">All available locations</option></select></label>
+        <button id="lab-run">Run analysis</button><a id="lab-export" href="#">Export CSV ↓</a>
+      </div>
+      <div class="saved-tools"><button id="save-investigation">Save this investigation</button><select id="saved-investigations"><option value="">Open a saved view…</option></select></div>
+      <div class="lab-output"><div class="lab-summary" id="lab-summary"></div><div id="lab-chart"></div><div class="lab-table" id="lab-table"></div></div>
+    </section>
+
+    <section class="ai-section" id="ask">
+      <div class="ai-copy">
+        <span class="kicker">AGENTIC RAG, IN THE OPEN</span>
+        <h2>Ask the grid.<br><em>Get evidence, not vibes.</em></h2>
+        <p>GridBrief AI searches the indexed ERCOT, EIA, and NWS evidence, combines it with structured observations, and answers through a grounded model. Every supported answer keeps its sources one click away.</p>
+        <div class="agent-flow"><span>YOUR QUESTION</span><i>→</i><span>HYBRID RETRIEVAL</span><i>→</i><span>GROUNDED ANSWER</span></div>
+      </div>
+      <div class="ask-card">
+        <div class="ask-head"><span class="orb"></span><div><b>GridBrief Analyst</b><small>Grounded in the latest indexed evidence</small></div></div>
+        <div class="suggestions"><button>What is driving the fuel mix?</button><button>Summarize current reliability risks.</button><button>What weather could affect the grid?</button></div>
+        <div class="answer chat-thread" id="ai-answer"><div class="message assistant"><span>GRIDBRIEF AI</span><p>Ask a question about current ERCOT conditions. I’ll show the evidence behind the answer.</p></div></div>
+        <form class="ask-form" id="ask-form"><textarea id="question" rows="2" maxlength="500" placeholder="Ask about load, prices, renewables, outages, or weather…"></textarea><button aria-label="Send question">↑</button></form>
+        <p class="disclaimer">Informational intelligence only. Published forecasts are labeled; no trading or operational advice.</p>
+      </div>
+    </section>
+
+    <section class="trust-section" id="methodology">
+      <div><span class="kicker">TRUST & OPERATIONS</span><h2>Know what you know.</h2><p>Every view identifies its coverage, source organization, and update status. GridBrief separates observed values from forecasts and never creates a market forecast of its own.</p></div>
+      <div class="freshness-board" id="freshness-board"></div>
+      <div class="archive-board"><header><span class="kicker">RECENT EDITIONS</span><span>ROLE-AWARE ARCHIVE</span></header><div id="edition-archive"></div></div>
+    </section>
+  </main>
+
+  <footer><div class="brand"><span class="brand-mark"><i></i><i></i><i></i></span><span>GRIDBRIEF <b>AI</b></span></div><p>Source-grounded ERCOT intelligence.</p><a href="/api/docs">API</a></footer>
+
+  <div class="drawer-backdrop" id="drawer-backdrop"></div>
+  <aside class="source-drawer" id="source-drawer" aria-hidden="true"><header><div><span class="kicker">EVIDENCE LEDGER</span><h3>Sources</h3></div><button id="close-sources">×</button></header><div id="source-list"></div></aside>
+  <dialog class="chart-modal" id="chart-modal"><button class="modal-close" id="modal-close">×</button><div id="modal-content"></div></dialog>
+  <dialog class="preferences-modal" id="preferences-modal"><button class="modal-close" id="preferences-close">×</button><span class="kicker">PERSONAL WORKSPACE</span><h2>Make GridBrief yours.</h2><form id="preferences-form"><label>DEFAULT ROLE<select name="role"><option value="general">General / executive</option><option value="market_analyst">Market analyst</option><option value="grid_operations">Grid operations & reliability</option></select></label><label>FOCUS ZONE<input name="zone" placeholder="NORTH, WEST, COAST…"></label><label>LOW RESERVE ALERT (MW)<input name="reserve" type="number" min="0" value="4000"></label><label>HIGH PRICE ALERT ($/MWh)<input name="price" type="number" min="0" value="150"></label><label>OUTAGE ALERT (MW)<input name="outages" type="number" min="0" value="5000"></label><label><input name="browserAlerts" type="checkbox"> Allow browser notifications</label><button>Save preferences</button></form></dialog>
+  <div class="plot-tooltip" id="plot-tooltip" role="status" aria-live="polite"></div>
+  <div class="toast" id="toast"></div>
+  <script src="/assets/site.js?v=33" defer></script>
+</body>
+</html>

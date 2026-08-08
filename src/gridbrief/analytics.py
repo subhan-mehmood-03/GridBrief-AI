@@ -48,6 +48,7 @@ class MetricWindowSummary:
     point_count: int
     unit: str
     latest: ObservationEvidence
+    earliest: ObservationEvidence
     average: float
     minimum: ObservationEvidence
     maximum: ObservationEvidence
@@ -67,6 +68,7 @@ class MetricWindowSummary:
             "point_count": self.point_count,
             "unit": self.unit,
             "latest": self.latest.as_dict(),
+            "earliest": self.earliest.as_dict(),
             "average": self.average,
             "minimum": self.minimum.as_dict(),
             "maximum": self.maximum.as_dict(),
@@ -235,6 +237,13 @@ def get_metric_window_summary(
             observation.observation_id,
         ),
     )
+    earliest = min(
+        observations,
+        key=lambda observation: (
+            observation.timestamp,
+            observation.observation_id,
+        ),
+    )
     minimum = min(
         observations,
         key=lambda observation: (
@@ -260,6 +269,7 @@ def get_metric_window_summary(
         point_count=len(observations),
         unit=next(iter(units)),
         latest=latest,
+        earliest=earliest,
         average=float(fmean(observation.value for observation in observations)),
         minimum=minimum,
         maximum=maximum,

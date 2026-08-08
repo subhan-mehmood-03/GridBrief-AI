@@ -8,7 +8,6 @@ the deterministic fallbacks in :mod:`gridbrief.graph`.
 from __future__ import annotations
 
 import json
-import os
 import time
 from dataclasses import dataclass
 from typing import Any
@@ -36,7 +35,7 @@ class LLMClient:
     def available(self) -> bool:
         settings = get_settings()
         return bool(
-            os.getenv("GRIDBRIEF_ALLOW_REMOTE_LLM", "").lower() in {"1", "true", "yes"}
+            settings.allow_remote_llm
             and settings.groq_api_key
             and settings.groq_model
             and settings.groq_model != "<currently-supported-model>"
@@ -64,6 +63,7 @@ class LLMClient:
             headers={
                 "Authorization": f"Bearer {settings.groq_api_key.get_secret_value()}",
                 "Content-Type": "application/json",
+                "User-Agent": "GridBrief-AI/1.0",
             },
             method="POST",
         )
