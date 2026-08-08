@@ -35,6 +35,11 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://localhost:11434"
     groq_model: str = "<currently-supported-model>"
     llm_cache_path: Path = Path("build/llm_cache.json")
+    timeseries_retention_days: int = Field(default=30, ge=8, le=365)
+    raw_item_retention_days: int = Field(default=14, ge=1, le=90)
+    document_retention_days: int = Field(default=30, ge=8, le=365)
+    operations_retention_days: int = Field(default=30, ge=8, le=365)
+    edition_retention_days: int = Field(default=90, ge=30, le=730)
 
     admin_api_key: SecretStr | None = None
     eia_api_key: SecretStr | None = None

@@ -59,6 +59,11 @@ jobs:
         env:
           GRIDBRIEF_DATABASE_URL: ${{ secrets.GRIDBRIEF_DATABASE_URL }}
         run: gridbrief index
+      - name: Enforce bounded data retention
+        if: always()
+        env:
+          GRIDBRIEF_DATABASE_URL: ${{ secrets.GRIDBRIEF_DATABASE_URL }}
+        run: gridbrief prune
       - name: Enforce required source success
         if: always()
         env:

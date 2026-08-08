@@ -13,6 +13,7 @@ from gridbrief.evaluation import evaluate_latest_editions
 from gridbrief.indexing import index_documents
 from gridbrief.ingestion import SUPPORTED_SOURCES, ingest_many
 from gridbrief.models import Edition
+from gridbrief.retention import prune_expired_data
 from gridbrief.scheduler import run_scheduler
 
 app = typer.Typer(help="GridBrief AI operational commands.", no_args_is_help=True)
@@ -124,6 +125,16 @@ def evaluate() -> None:
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
     if not report["passed"]:
         raise typer.Exit(code=1)
+
+
+@app.command()
+def prune() -> None:
+    """Remove expired operational data according to configured retention windows."""
+    try:
+        typer.echo(json.dumps(prune_expired_data(), sort_keys=True))
+    except Exception as exc:
+        typer.echo(f"Retention cleanup failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
 
 
 @app.command()
