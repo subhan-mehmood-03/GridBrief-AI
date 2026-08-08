@@ -3,6 +3,12 @@ from datetime import UTC, datetime, timedelta
 from gridbrief.adapters.nws import NWSAdapter
 
 
+def test_contact_email_is_safe_for_http_header() -> None:
+    adapter = NWSAdapter("operator@example.com\n")
+
+    assert adapter.headers["User-Agent"] == "GridBrief-AI/1.0 (operator@example.com)"
+
+
 def test_active_alert_snapshot_preserves_risk_metadata(monkeypatch) -> None:
     now = datetime(2026, 8, 8, tzinfo=UTC)
     adapter = NWSAdapter("operator@example.com")
