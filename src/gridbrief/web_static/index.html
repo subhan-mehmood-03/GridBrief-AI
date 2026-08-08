@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#07110f">
   <title>GridBrief AI — ERCOT Intelligence</title>
-  <link rel="stylesheet" href="/assets/site.css?v=25">
+  <link rel="stylesheet" href="/assets/site.css?v=26">
   <style>.region-grid>button{position:relative;overflow:hidden;border:1px solid #29473c;border-radius:5px;padding:16px;text-align:left;color:var(--text);background:linear-gradient(135deg,rgba(184,243,74,var(--heat)),#0a1713 70%)}.region-grid>button span,.region-grid>button b,.region-grid>button small{display:block}.region-grid>button span{font:8px var(--mono);text-transform:uppercase}.region-grid>button b{font-size:18px;margin:8px 0}.region-grid>button small{font-size:8px;color:#bfd0c7}.answer-chart{margin:6px 0 0 6px;padding:6px 9px;border:1px solid #36564a;border-radius:20px;background:transparent;color:var(--cyan);font:8px var(--mono)}</style>
 </head>
 <body>
@@ -181,6 +181,6 @@
   <dialog class="preferences-modal" id="preferences-modal"><button class="modal-close" id="preferences-close">×</button><span class="kicker">PERSONAL WORKSPACE</span><h2>Make GridBrief yours.</h2><form id="preferences-form"><label>DEFAULT ROLE<select name="role"><option value="general">General / executive</option><option value="market_analyst">Market analyst</option><option value="grid_operations">Grid operations & reliability</option></select></label><label>FOCUS ZONE<input name="zone" placeholder="NORTH, WEST, COAST…"></label><label>LOW RESERVE ALERT (MW)<input name="reserve" type="number" min="0" value="4000"></label><label>HIGH PRICE ALERT ($/MWh)<input name="price" type="number" min="0" value="150"></label><label>OUTAGE ALERT (MW)<input name="outages" type="number" min="0" value="5000"></label><label><input name="browserAlerts" type="checkbox"> Allow browser notifications</label><button>Save preferences</button></form></dialog>
   <div class="plot-tooltip" id="plot-tooltip" role="status" aria-live="polite"></div>
   <div class="toast" id="toast"></div>
-  <script src="/assets/site.js?v=34" defer></script>
+  <script src="/assets/site.js?v=35" defer></script>
 </body>
 </html>
