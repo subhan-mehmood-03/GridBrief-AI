@@ -27,8 +27,8 @@ class LLMError(RuntimeError):
 class LLMClient:
     """OpenAI-compatible JSON client with retries and output bounds."""
 
-    timeout: float = 30.0
-    max_retries: int = 2
+    timeout: float = 15.0
+    max_retries: int = 1
     max_tokens: int = 1_200
 
     @property

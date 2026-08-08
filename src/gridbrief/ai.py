@@ -190,7 +190,8 @@ def understand_question(
     dam_reference = re.search(r"\b(day[ -]?ahead|da|dam)\b", current)
     rtm_reference = re.search(r"\b(real[ -]?time|rt|rtm)\b", current)
     procedural = re.search(
-        r"\b(deadline|cutoff|close|closing|submit|submission|timeline|schedule|when|what time)\b",
+        r"\b(deadline|cutoff|close|closing|submit|submission|timeline|timing|schedule|"
+        r"when|what time)\b",
         current,
     )
     if procedural and dam_reference:
