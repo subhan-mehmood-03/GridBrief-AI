@@ -6,9 +6,13 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from typing import Any
 
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+
 from gridbrief.adapters import EIAAdapter, ERCOTAdapter, NWSAdapter, RSSAdapter
 from gridbrief.config import Settings, get_settings
 from gridbrief.db import session_scope
+from gridbrief.models import Document, Timeseries
+from gridbrief.models import RawItem as RawItemModel
 from gridbrief.normalization import normalize_item
 from gridbrief.polling import deduplicate_raw_items, polling_window
 from gridbrief.repository import Repository
@@ -115,29 +119,87 @@ def _begin_run(source_name: str, started_at: datetime) -> tuple[int, Any | None,
 
 
 def _persist(source_id: int, items: list[Any], ingested_at: datetime) -> tuple[int, int]:
-    timeseries_count = 0
-    document_count = 0
+    raw_rows: dict[tuple[int, str], dict[str, Any]] = {}
+    timeseries_rows: dict[tuple[str, str, str, datetime], dict[str, Any]] = {}
+    document_rows: dict[tuple[int, str], dict[str, Any]] = {}
     with session_scope() as session:
         _disable_automatic_prepares(session)
-        repo = Repository(session)
         for item in items:
             normalized = normalize_item(item)
-            repo.upsert_raw_item(
-                source_id=source_id,
-                source_ref=item.source_ref,
-                kind=item.kind,
-                published_at=item.published_at,
-                url=item.url,
-                raw_hash=item.raw_hash,
-                ingested_at=ingested_at,
-            )
+            raw_rows[(source_id, item.source_ref)] = {
+                "source_id": source_id,
+                "source_ref": item.source_ref,
+                "kind": item.kind,
+                "published_at": item.published_at,
+                "url": item.url,
+                "raw_hash": item.raw_hash,
+                "ingested_at": ingested_at,
+            }
             for row in normalized.timeseries:
-                repo.upsert_timeseries_point(source_id=source_id, **asdict(row))
-                timeseries_count += 1
+                values = {"source_id": source_id, **asdict(row)}
+                key = (row.iso, row.metric, row.settlement_point, row.ts)
+                timeseries_rows[key] = values
             if normalized.document is not None:
-                repo.upsert_document(source_id=source_id, **asdict(normalized.document))
-                document_count += 1
-    return timeseries_count, document_count
+                document = asdict(normalized.document)
+                document_rows[(source_id, str(document["source_ref"]))] = {
+                    "source_id": source_id,
+                    **document,
+                    "chunk_ids": [],
+                }
+        _bulk_upsert_raw(session, list(raw_rows.values()))
+        _bulk_upsert_timeseries(session, list(timeseries_rows.values()))
+        _bulk_upsert_documents(session, list(document_rows.values()))
+    return len(timeseries_rows), len(document_rows)
+
+
+def _bulk_upsert_raw(session: Any, rows: list[dict[str, Any]]) -> None:
+    for offset in range(0, len(rows), 500):
+        statement = pg_insert(RawItemModel).values(rows[offset : offset + 500])
+        session.execute(
+            statement.on_conflict_do_update(
+                index_elements=[RawItemModel.source_id, RawItemModel.source_ref],
+                set_={
+                    "published_at": statement.excluded.published_at,
+                    "url": statement.excluded.url,
+                    "raw_hash": statement.excluded.raw_hash,
+                    "ingested_at": statement.excluded.ingested_at,
+                },
+            )
+        )
+
+
+def _bulk_upsert_timeseries(session: Any, rows: list[dict[str, Any]]) -> None:
+    for offset in range(0, len(rows), 500):
+        statement = pg_insert(Timeseries).values(rows[offset : offset + 500])
+        session.execute(
+            statement.on_conflict_do_update(
+                constraint="timeseries_observation_key",
+                set_={
+                    "value": statement.excluded.value,
+                    "unit": statement.excluded.unit,
+                    "source_id": statement.excluded.source_id,
+                },
+            )
+        )
+
+
+def _bulk_upsert_documents(session: Any, rows: list[dict[str, Any]]) -> None:
+    for offset in range(0, len(rows), 250):
+        statement = pg_insert(Document).values(rows[offset : offset + 250])
+        session.execute(
+            statement.on_conflict_do_update(
+                index_elements=[Document.source_id, Document.source_ref],
+                index_where=Document.source_ref.is_not(None),
+                set_={
+                    "title": statement.excluded.title,
+                    "url": statement.excluded.url,
+                    "published_at": statement.excluded.published_at,
+                    "text": statement.excluded.text,
+                    "topic": statement.excluded.topic,
+                    "importance": statement.excluded.importance,
+                },
+            )
+        )
 
 
 def _finish_run(

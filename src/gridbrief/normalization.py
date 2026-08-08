@@ -180,9 +180,25 @@ def normalize_item(item: RawItem) -> NormalizedItem:
 
 def _normalize_ercot(item: RawItem) -> list[TimeseriesRow]:
     payload = item.payload
-    timestamp = item.published_at
+    timestamp = parse_timestamp(payload.get("ts")) or item.published_at
     if timestamp is None:
         return []
+    if payload.get("metric"):
+        metric = str(payload["metric"])
+        _register_dynamic(
+            metric,
+            metric.replace("_", " ").title(),
+            str(payload.get("unit") or ""),
+            15,
+            60,
+            locations=(str(payload.get("settlement_point") or "SYSTEM"),),
+        )
+        return _row(
+            metric,
+            _location(payload.get("settlement_point") or "SYSTEM"),
+            timestamp,
+            payload.get("value"),
+        )
     dataset = payload.get("dataset")
     if dataset in {"spp_rt", "spp_da"}:
         return _row(dataset, payload.get("Location") or "ERCOT", timestamp, payload.get("SPP"))
@@ -228,7 +244,24 @@ def _normalize_eia(item: RawItem) -> list[TimeseriesRow]:
 
 def _normalize_nws(item: RawItem) -> list[TimeseriesRow]:
     payload = item.payload
-    timestamp = item.published_at
+    timestamp = parse_timestamp(payload.get("ts")) or item.published_at
+    if payload.get("metric") and timestamp is not None:
+        metric = str(payload["metric"])
+        _register_dynamic(
+            metric,
+            metric.replace("_", " ").title(),
+            str(payload.get("unit") or ""),
+            60,
+            180,
+            locations=(_location(payload.get("settlement_point") or "TEXAS"),),
+            sources=("nws",),
+        )
+        return _row(
+            metric,
+            _location(payload.get("settlement_point") or "TEXAS"),
+            timestamp,
+            payload.get("value"),
+        )
     if timestamp is None or payload.get("dataset") != "forecast":
         return []
     location = _location(payload.get("location") or "TEXAS")
@@ -254,10 +287,17 @@ def _unique_rows(rows: list[TimeseriesRow]) -> list[TimeseriesRow]:
     return list(keyed.values())
 
 
-def _register_dynamic(metric: str, label: str, unit: str, cadence: int, sla: int) -> None:
-    METRIC_REGISTRY.setdefault(
-        metric, MetricSpec(label, unit, cadence, sla, ("ERCOT",), ("ercot", "eia"))
-    )
+def _register_dynamic(
+    metric: str,
+    label: str,
+    unit: str,
+    cadence: int,
+    sla: int,
+    *,
+    locations: tuple[str, ...] = ("ERCOT",),
+    sources: tuple[str, ...] = ("ercot", "eia"),
+) -> None:
+    METRIC_REGISTRY.setdefault(metric, MetricSpec(label, unit, cadence, sla, locations, sources))
 
 
 def _number(value: Any) -> float | None:

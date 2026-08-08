@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     breaking_outage_threshold_mw: float = Field(default=1_000.0, gt=0)
     require_fresh_data: bool = True
     automatic_refresh: bool = True
+    allow_remote_llm: bool = False
     public_mode: bool = False
     contact_email: str = "you@example.com"
     retrieval_backend: Literal["pgvector", "chroma"] = "pgvector"

@@ -2,6 +2,7 @@ services:
   - type: web
     name: gridbrief-web
     runtime: docker
+    plan: free
     healthCheckPath: /api/health
     envVars:
       - key: GRIDBRIEF_PUBLIC_MODE
@@ -22,4 +23,6 @@ services:
         sync: false
       - key: GRIDBRIEF_GROQ_MODEL
         sync: false
+      - key: GRIDBRIEF_ALLOW_REMOTE_LLM
+        value: "true"
 

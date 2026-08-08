@@ -1,0 +1,15 @@
+.git
+.github
+.pytest_cache
+.ruff_cache
+.venv
+__pycache__
+*.py[cod]
+*.egg-info
+.env
+.env.*
+build
+dist
+tests
+specs
+GridBrief_AI_Step_by_Step.md
