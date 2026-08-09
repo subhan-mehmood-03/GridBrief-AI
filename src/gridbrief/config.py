@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     allow_remote_llm: bool = False
     public_mode: bool = False
     contact_email: str = "you@example.com"
-    retrieval_backend: Literal["pgvector", "chroma"] = "pgvector"
+    retrieval_backend: Literal["pgvector", "lexical", "chroma"] = "pgvector"
     embedding_model: str = "BAAI/bge-base-en-v1.5"
     chroma_path: Path = Path("./chroma_data")
     ollama_base_url: str = "http://localhost:11434"

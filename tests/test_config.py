@@ -12,4 +12,3 @@ def test_settings_have_safe_defaults() -> None:
     assert settings.document_retention_days == 30
     assert settings.edition_retention_days == 90
     assert settings.timeseries_retention_days >= 8
-

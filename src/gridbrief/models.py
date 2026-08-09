@@ -5,6 +5,7 @@ the SQL files are the source of truth for schema (constraints/indexes);
 these classes exist so repository.py and the rest of the app get typed,
 ergonomic access instead of hand-written SQL everywhere.
 """
+
 from __future__ import annotations
 
 from datetime import date, datetime

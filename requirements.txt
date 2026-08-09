@@ -1,14 +1,2 @@
-# GridBrief AI runtime dependencies (core + website + live ERCOT ingestion)
-pydantic-settings>=2.7,<3
-typer>=0.15,<1
-sqlalchemy>=2.0,<3
-psycopg[binary]>=3.1,<4
-pgvector>=0.3,<1
-feedparser>=6.0,<7
-langgraph>=0.2,<1
-langchain-core>=0.3,<1
-langchain>=0.3,<1
-sentence-transformers>=3.3,<4
-fastapi>=0.115,<1
-uvicorn[standard]>=0.34,<1
-gridstatus>=0.29,<1
+# Complete local development environment. Package versions live in pyproject.toml.
+-e .[dev,web,ercot,local-rag]

@@ -391,9 +391,7 @@ def _fallback_draft(
             latest[key] = row
     selected_observations: list[dict[str, Any]] = []
     for metric in dict.fromkeys(row["metric"] for row in latest.values()):
-        selected_observations.extend(
-            row for row in latest.values() if row["metric"] == metric
-        )
+        selected_observations.extend(row for row in latest.values() if row["metric"] == metric)
     metric_counts: defaultdict[str, int] = defaultdict(int)
     balanced_observations = []
     for row in selected_observations:
@@ -482,9 +480,7 @@ def _claim_supported(
         return False
     marker_free_claim = CALC_RE.sub("", CITATION_RE.sub("", claim))
     claim_words = {
-        word
-        for word in re.findall(r"[a-z0-9]+", marker_free_claim.lower())
-        if len(word) > 3
+        word for word in re.findall(r"[a-z0-9]+", marker_free_claim.lower()) if len(word) > 3
     }
     evidence_words = {
         word
@@ -528,9 +524,7 @@ def verifier(state: GraphState) -> dict[str, Any]:
         }
         claims = _claims(draft)
         unsupported = [
-            claim
-            for claim in claims
-            if not _claim_supported(claim, evidence, observation_evidence)
+            claim for claim in claims if not _claim_supported(claim, evidence, observation_evidence)
         ]
         client = get_llm_client()
         if client.available and claims:

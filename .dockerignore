@@ -1,6 +1,7 @@
 .git
 .github
 .pytest_cache
+pytest-cache-files-*
 .ruff_cache
 .venv
 __pycache__

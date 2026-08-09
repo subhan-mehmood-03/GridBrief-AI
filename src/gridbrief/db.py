@@ -4,6 +4,7 @@ Reads GRIDBRIEF_DATABASE_URL (the Supabase pooled connection string) and
 exposes a SQLAlchemy 2 engine + session factory used by repository.py and
 by the `gridbrief init-db` / `gridbrief migrate` CLI commands.
 """
+
 from __future__ import annotations
 
 from collections.abc import Iterator
@@ -36,6 +37,8 @@ def get_engine() -> Engine:
         _ENGINE = create_engine(
             get_database_url(),
             pool_pre_ping=True,
+            pool_size=2,
+            max_overflow=1,
             future=True,
             connect_args={"prepare_threshold": None},
         )
