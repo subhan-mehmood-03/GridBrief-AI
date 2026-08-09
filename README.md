@@ -30,6 +30,32 @@ queries and CSV export. Production retention rules limit database size and Supab
 - **Data:** PostgreSQL/Supabase, SQLAlchemy, psycopg, ERCOT, EIA, NWS, and RSS adapters
 - **Operations:** Docker, Render, GitHub Actions ingestion/generation, pytest, and Ruff
 
+## Repository structure
+
+```text
+GridBrief-AI/
+├── .github/workflows/       # CI, scheduled ingestion, and edition generation
+├── migrations/              # Ordered PostgreSQL and pgvector schema migrations
+├── src/gridbrief/
+│   ├── adapters/            # ERCOT, EIA, NWS, and RSS source adapters
+│   ├── web_static/          # Website HTML, CSS, and browser JavaScript
+│   ├── ai.py                # Ask AI intent planning, retrieval, and answer verification
+│   ├── analytics.py         # Deterministic metric and window calculations
+│   ├── graph.py             # LangGraph generation nodes and verification loop
+│   ├── ingestion.py         # Source orchestration and persistence
+│   ├── pipeline.py          # Edition planning and generation entry points
+│   ├── repository.py        # Database access and persistence boundary
+│   ├── retrieval.py         # pgvector and low-memory lexical retrieval
+│   ├── scheduler.py         # Local refresh and breaking-update scheduling
+│   └── web.py               # FastAPI application and public JSON endpoints
+├── tests/                   # Unit, repository, migration, Ask AI, and web tests
+├── Dockerfile               # Slim Render-compatible production image
+├── pyproject.toml           # Package metadata, dependencies, and tool configuration
+├── render.yaml              # Render service and production environment configuration
+├── requirements.txt         # Complete local development installation entry point
+└── README.md                # Project setup, architecture, data, and verification guide
+```
+
 ## Local setup
 
 Requirements: Python 3.12, PostgreSQL 16 with pgvector (or a Supabase connection), and Node.js only
