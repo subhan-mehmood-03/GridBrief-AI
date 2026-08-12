@@ -7,6 +7,10 @@ the evidence, while citations and verification keep answers and persona-specific
 
 **Live website:** [gridbrief-web.onrender.com](https://gridbrief-web.onrender.com/)
 
+**LangSmith/LangGraph AI Trace Example:** [AI Trace](https://smith.langchain.com/public/00a10de1-cf1b-4052-befc-51aa8f857e27/r/019ff4a9-d2bb-7ed1-98e5-5f22c0516737?start_time=2026-08-12T06%3A29%3A58.075382Z)
+
+**LangSmith/LangGraph Edition Trace Example:** [Edition Trace](https://smith.langchain.com/public/02188a1e-a65c-438f-90fb-946e7d088b47/r/019fe3ff-ad65-7bd0-8d10-d0158e0c06dc?start_time=2026-08-09T00%3A50%3A11.940316Z)
+
 ## Included data
 
 | Source | Data used by GridBrief |
