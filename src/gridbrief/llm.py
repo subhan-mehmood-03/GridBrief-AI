@@ -14,6 +14,8 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from langsmith import traceable
+
 from gridbrief.config import get_settings
 
 GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
@@ -41,6 +43,7 @@ class LLMClient:
             and settings.groq_model != "<currently-supported-model>"
         )
 
+    @traceable(name="Ask AI: Groq inference", run_type="llm", tags=["ask-ai", "groq"])
     def complete_json(self, *, system: str, user: str) -> Any:
         settings = get_settings()
         if not self.available:
