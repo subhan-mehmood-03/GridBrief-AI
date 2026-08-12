@@ -49,6 +49,7 @@ GridBrief-AI/
 │   ├── scheduler.py         # Local refresh and breaking-update scheduling
 │   └── web.py               # FastAPI application and public JSON endpoints
 ├── tests/                   # Unit, repository, migration, Ask AI, and web tests
+├── Deliverables/            # Includes deliverables for submission
 ├── Dockerfile               # Slim Render-compatible production image
 ├── pyproject.toml           # Package metadata, dependencies, and tool configuration
 ├── render.yaml              # Render service and production environment configuration
@@ -112,3 +113,9 @@ gridbrief --help
 gridbrief generate --help
 docker build --tag gridbrief:local .
 ```
+
+## Deliverable Links
+- [Group 3 – GridBrief AI Tech Stack Document](Deliverables/Group%203%20-%20Gridbrief%20AI%20AI%20Tech%20Stack.pdf)
+- [Group 3 - GridBrief AI Presentation Slides](Deliverables/Group%203%20-%20GridBrief%20AI%20Presentation.pptx)
+- [Group 3 - GridBrief Demo Video](Deliverables/Group%203%20-%20GridBrief%20AI%20Demo.mp4)
+
