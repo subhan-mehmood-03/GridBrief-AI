@@ -25,4 +25,12 @@ services:
         sync: false
       - key: GRIDBRIEF_ALLOW_REMOTE_LLM
         value: "true"
+      - key: LANGSMITH_TRACING
+        value: "true"
+      - key: LANGSMITH_PROJECT
+        value: gridbrief-production
+      - key: LANGSMITH_ENDPOINT
+        value: https://api.smith.langchain.com
+      - key: LANGSMITH_API_KEY
+        sync: false
 

@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+from langsmith import traceable
+
 from gridbrief.analytics import get_dart_window_summary, get_metric_window_summary
 from gridbrief.config import get_settings
 from gridbrief.db import session_scope
@@ -173,6 +175,7 @@ def _conversation_text(question: str, history: list[dict[str, str]]) -> str:
     return f"{prior} {question}".lower()
 
 
+@traceable(name="Ask AI: Understand question", run_type="chain", tags=["ask-ai"])
 def understand_question(
     question: str, *, role: str, history: list[dict[str, str]] | None = None
 ) -> AskQueryPlan:
@@ -459,6 +462,7 @@ def _procedural_answer(plan: AskQueryPlan) -> dict[str, Any]:
     }
 
 
+@traceable(name="Ask AI: Structured retrieval and calculation", run_type="tool", tags=["ask-ai"])
 def _direct_answer(plan: AskQueryPlan) -> dict[str, Any]:
     if plan.subject in {"ercot_dam_timeline", "ercot_rtm_timeline"}:
         return _procedural_answer(plan)
@@ -640,6 +644,7 @@ def _direct_answer(plan: AskQueryPlan) -> dict[str, Any]:
     }
 
 
+@traceable(name="Ask AI: Retrieve document evidence", run_type="retriever", tags=["ask-ai"])
 def _narrative_evidence(question: str, plan: AskQueryPlan) -> list[dict[str, Any]]:
     now = datetime.now(UTC)
     try:
@@ -742,6 +747,7 @@ def _causal_claim_supported(claim: str, evidence_by_document: dict[int, str]) ->
     return any(term in cited_text for term in CAUSAL_TERMS)
 
 
+@traceable(name="Ask AI: Document RAG and verification", run_type="chain", tags=["ask-ai"])
 def _narrative_answer(question: str, plan: AskQueryPlan) -> dict[str, Any]:
     evidence = _narrative_evidence(question, plan)
     if not evidence:
@@ -815,6 +821,12 @@ def _narrative_answer(question: str, plan: AskQueryPlan) -> dict[str, Any]:
     }
 
 
+@traceable(
+    name="GridBrief Ask AI",
+    run_type="chain",
+    tags=["ask-ai", "public-api"],
+    metadata={"component": "ask-ai", "grounding": "required"},
+)
 def ask_gridbrief(
     question: str,
     *,

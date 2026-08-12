@@ -20,6 +20,13 @@ from gridbrief.normalization import build_raw_item, normalize_item
 from gridbrief.web import _RATE_BUCKETS, create_app
 
 
+def test_ask_ai_functions_are_langsmith_traceable() -> None:
+    assert getattr(ask_gridbrief, "__langsmith_traceable__", False)
+    assert getattr(understand_question, "__langsmith_traceable__", False)
+    assert getattr(_direct_answer, "__langsmith_traceable__", False)
+    assert getattr(_narrative_answer, "__langsmith_traceable__", False)
+
+
 def _observation(identifier: int, hour: int, minute: int, value: float) -> ObservationEvidence:
     return ObservationEvidence(
         observation_id=identifier,

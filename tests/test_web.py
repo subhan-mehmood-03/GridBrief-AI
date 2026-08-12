@@ -100,11 +100,11 @@ def test_frontend_humanizes_calculations_freshness_and_live_ticker() -> None:
     assert "ticker-live 32s linear infinite" in stylesheet
     assert "@keyframes ticker-live" in stylesheet
     assert "prefers-reduced-motion:reduce" in stylesheet
-    assert "/assets/site.css?v=26" in html
+    assert "/assets/site.css?v=27" in html
     assert "function startTicker(" in javascript
     assert "requestAnimationFrame(advance)" in javascript
     assert "style.setProperty('transform'" in javascript
-    assert "/assets/site.js?v=36" in html
+    assert "/assets/site.js?v=37" in html
 
 
 def test_frontend_prefetches_ranges_and_updates_studio_preview() -> None:
@@ -116,6 +116,16 @@ def test_frontend_prefetches_ranges_and_updates_studio_preview() -> None:
     assert "syncStudioSections(state.studioEdition)" in javascript
     assert "$('#studio-sections').addEventListener('change'" in javascript
     assert "async function guardedAsk(" in javascript
+
+
+def test_frontend_supporting_charts_handle_composite_and_uncached_metrics() -> None:
+    javascript = (
+        Path(__file__).parents[1] / "src" / "gridbrief" / "web_static" / "site.js"
+    ).read_text(encoding="utf-8")
+    assert "async function supportingRows(" in javascript
+    assert "function fuelMixDetail(" in javascript
+    assert "if(metric==='fuel_mix')" in javascript
+    assert "/api/data/series?metric=" in javascript
 
 
 def test_public_generation_requires_admin_key(monkeypatch) -> None:
